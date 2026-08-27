@@ -1,0 +1,3 @@
+# Fase 0-1: dependencias mínimas.
+# Iremos agregando aquí conforme avancemos de fase (Ollama client, whisper, piper, etc.)
+python-dotenv

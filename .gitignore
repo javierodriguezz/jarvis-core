@@ -1,0 +1,15 @@
+# Entornos virtuales
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Datos locales y secretos
+.env
+data/*.db
+data/*.json
+data/*.log
+!data/.gitkeep
+
+# Editor
+.vscode/
