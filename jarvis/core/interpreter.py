@@ -8,9 +8,6 @@ Fase 3: esta misma función se reemplaza internamente por una llamada a un
 modelo de lenguaje local (Ollama), pero la firma (lo que recibe y lo que
 regresa) se mantiene igual -- por eso el resto del sistema no necesita
 cambiar cuando lleguemos a esa fase.
-
-TODO (Fase 1, primera sesión de código): implementar interpret() para que
-reconozca al menos la instrucción de "qué hora es".
 """
 
 from dataclasses import dataclass
@@ -22,9 +19,17 @@ class ToolCall:
     params: dict
 
 
+PALABRAS_CLAVE_HORA = ("hora", "fecha", "qué día es", "que dia es")
+
+
 def interpret(user_text: str) -> ToolCall | None:
     """Traduce texto libre del usuario a una llamada de herramienta.
 
     Devuelve None si no reconoce ninguna instrucción.
     """
-    raise NotImplementedError("Lo implementamos juntos en la Fase 1.")
+    texto = user_text.lower()
+
+    if any(palabra in texto for palabra in PALABRAS_CLAVE_HORA):
+        return ToolCall(tool_name="decir_hora", params={})
+
+    return None
