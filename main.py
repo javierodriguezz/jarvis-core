@@ -1,10 +1,11 @@
 """
 Punto de entrada de Jarvis (v0.1 - consola).
 
-Por ahora este loop solo repite lo que escribes (echo), para confirmar que
-el entorno está bien configurado. En la Fase 1 lo conectamos con
-jarvis/core/interpreter.py para que reconozca instrucciones reales.
+Lee texto de la consola, lo pasa por jarvis.core.interpreter para traducirlo
+a una ToolCall, y jarvis.core.executor la valida y ejecuta.
 """
+
+from jarvis.core import executor, interpreter
 
 
 def main():
@@ -16,9 +17,13 @@ def main():
             break
         if not texto:
             continue
-        # TODO (Fase 1): reemplazar este echo por una llamada real a
-        # jarvis.core.interpreter para interpretar la instrucción.
-        print(f"(echo) dijiste: {texto}")
+
+        tool_call = interpreter.interpret(texto)
+        if tool_call is None:
+            print("No entendí esa instrucción.")
+            continue
+
+        print(executor.execute(tool_call))
 
 
 if __name__ == "__main__":
