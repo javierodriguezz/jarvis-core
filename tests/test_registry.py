@@ -37,3 +37,12 @@ def test_abrir_programa_o_web_tiene_forma_correcta():
     assert callable(entrada["func"])
     assert entrada["permission"] in PERMISOS_VALIDOS
     assert isinstance(entrada["description"], str) and entrada["description"]
+
+
+def test_notas_registradas_y_con_forma_correcta():
+    for nombre in ("crear_nota", "consultar_notas"):
+        entrada = TOOLS[nombre]
+
+        assert callable(entrada["func"])
+        assert entrada["permission"] in PERMISOS_VALIDOS
+        assert isinstance(entrada["description"], str) and entrada["description"]

@@ -21,6 +21,15 @@ class ToolCall:
 
 PALABRAS_CLAVE_HORA = ("hora", "fecha", "qué día es", "que dia es")
 PALABRAS_CLAVE_ABRIR = ("abre ", "abrir ")
+PALABRAS_CLAVE_CONSULTAR_NOTAS = (
+    "mis notas",
+    "las notas",
+    "qué notas tengo",
+    "que notas tengo",
+)
+# Prefijos más específicos primero, para no dejar un "que" colgando en el
+# texto de la nota (ej. "anota que hoy es viernes" -> "hoy es viernes").
+PREFIJOS_CREAR_NOTA = ("anota que ", "apunta que ", "anota ", "apunta ")
 
 
 def interpret(user_text: str) -> ToolCall | None:
@@ -40,5 +49,15 @@ def interpret(user_text: str) -> ToolCall | None:
             # la intención -- validar es trabajo de la herramienta.
             nombre = texto.split(palabra, 1)[1].strip()
             return ToolCall(tool_name="abrir_programa_o_web", params={"nombre": nombre})
+
+    if any(palabra in texto for palabra in PALABRAS_CLAVE_CONSULTAR_NOTAS):
+        return ToolCall(tool_name="consultar_notas", params={})
+
+    for prefijo in PREFIJOS_CREAR_NOTA:
+        if texto.startswith(prefijo):
+            # user_text (no texto) para conservar mayúsculas/acentos originales
+            # de la nota -- texto solo sirve para hacer el match en minúsculas.
+            texto_nota = user_text[len(prefijo):].strip()
+            return ToolCall(tool_name="crear_nota", params={"texto": texto_nota})
 
     return None

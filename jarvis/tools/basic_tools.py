@@ -14,6 +14,7 @@ import webbrowser
 from datetime import datetime
 
 import config
+from jarvis.memory import notes_store
 
 
 def decir_hora() -> str:
@@ -44,4 +45,21 @@ def abrir_programa_o_web(nombre: str) -> str:
     return f"'{nombre}' no está en la lista de programas o sitios permitidos."
 
 
-# TODO (Fase 1, paso 3): crear_nota(texto) / consultar_notas()
+def crear_nota(texto: str) -> str:
+    """Guarda una nota nueva en el almacenamiento de notas (data/notes.json)."""
+    texto = texto.strip()
+    if not texto:
+        return "No puedo guardar una nota vacía."
+
+    notes_store.add_note(texto)
+    return f"Nota guardada: {texto}"
+
+
+def consultar_notas() -> str:
+    """Devuelve todas las notas guardadas como una lista numerada legible."""
+    notas = notes_store.list_notes()
+    if not notas:
+        return "No tienes notas guardadas."
+
+    lineas = [f"{i}. {nota['texto']}" for i, nota in enumerate(notas, start=1)]
+    return "\n".join(lineas)

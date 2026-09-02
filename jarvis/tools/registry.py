@@ -24,4 +24,14 @@ TOOLS = {
         "permission": "SAFE",
         "description": "Abre un programa o página web de la lista blanca.",
     },
+    "crear_nota": {
+        "func": basic_tools.crear_nota,
+        "permission": "SAFE",
+        "description": "Guarda una nota de texto nueva.",
+    },
+    "consultar_notas": {
+        "func": basic_tools.consultar_notas,
+        "permission": "SAFE",
+        "description": "Muestra todas las notas guardadas.",
+    },
 }

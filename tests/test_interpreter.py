@@ -43,3 +43,25 @@ def test_reconoce_abrir_con_variante_infinitivo():
     assert resultado == ToolCall(
         tool_name="abrir_programa_o_web", params={"nombre": "github"}
     )
+
+
+def test_reconoce_crear_nota_con_anota_que():
+    resultado = interpret("anota que hoy es viernes")
+
+    assert resultado == ToolCall(
+        tool_name="crear_nota", params={"texto": "hoy es viernes"}
+    )
+
+
+def test_reconoce_crear_nota_con_apunta():
+    resultado = interpret("apunta comprar leche")
+
+    assert resultado == ToolCall(
+        tool_name="crear_nota", params={"texto": "comprar leche"}
+    )
+
+
+def test_reconoce_consultar_notas():
+    resultado = interpret("¿cuáles son mis notas?")
+
+    assert resultado == ToolCall(tool_name="consultar_notas", params={})

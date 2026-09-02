@@ -65,3 +65,40 @@ def test_abrir_algo_no_permitido_no_ejecuta_nada(monkeypatch):
     resultado = basic_tools.abrir_programa_o_web("cmd.exe")
 
     assert "no está en la lista" in resultado
+
+
+def test_crear_nota_guarda_y_confirma(tmp_path, monkeypatch):
+    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+
+    resultado = basic_tools.crear_nota("comprar pan")
+
+    assert "comprar pan" in resultado
+    assert basic_tools.notes_store.list_notes()[0]["texto"] == "comprar pan"
+
+
+def test_crear_nota_vacia_no_guarda_nada(tmp_path, monkeypatch):
+    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+
+    resultado = basic_tools.crear_nota("   ")
+
+    assert basic_tools.notes_store.list_notes() == []
+    assert "vacía" in resultado
+
+
+def test_consultar_notas_sin_notas(tmp_path, monkeypatch):
+    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+
+    resultado = basic_tools.consultar_notas()
+
+    assert "no tienes notas" in resultado.lower()
+
+
+def test_consultar_notas_con_notas(tmp_path, monkeypatch):
+    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    basic_tools.crear_nota("primera")
+    basic_tools.crear_nota("segunda")
+
+    resultado = basic_tools.consultar_notas()
+
+    assert "primera" in resultado
+    assert "segunda" in resultado
