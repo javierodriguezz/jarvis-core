@@ -25,3 +25,15 @@ def test_decir_hora_tiene_forma_correcta():
 
 def test_decir_hora_es_safe():
     assert TOOLS["decir_hora"]["permission"] == "SAFE"
+
+
+def test_abrir_programa_o_web_registrada():
+    assert "abrir_programa_o_web" in TOOLS
+
+
+def test_abrir_programa_o_web_tiene_forma_correcta():
+    entrada = TOOLS["abrir_programa_o_web"]
+
+    assert callable(entrada["func"])
+    assert entrada["permission"] in PERMISOS_VALIDOS
+    assert isinstance(entrada["description"], str) and entrada["description"]

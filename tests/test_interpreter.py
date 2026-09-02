@@ -27,3 +27,19 @@ def test_texto_no_reconocido_devuelve_none():
     resultado = interpret("cuéntame un chiste")
 
     assert resultado is None
+
+
+def test_reconoce_abrir_programa_o_web():
+    resultado = interpret("abre youtube")
+
+    assert resultado == ToolCall(
+        tool_name="abrir_programa_o_web", params={"nombre": "youtube"}
+    )
+
+
+def test_reconoce_abrir_con_variante_infinitivo():
+    resultado = interpret("quiero abrir github")
+
+    assert resultado == ToolCall(
+        tool_name="abrir_programa_o_web", params={"nombre": "github"}
+    )

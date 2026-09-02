@@ -19,4 +19,9 @@ TOOLS = {
         "permission": "SAFE",
         "description": "Dice la hora y fecha actuales.",
     },
+    "abrir_programa_o_web": {
+        "func": basic_tools.abrir_programa_o_web,
+        "permission": "SAFE",
+        "description": "Abre un programa o página web de la lista blanca.",
+    },
 }

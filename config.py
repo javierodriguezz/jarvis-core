@@ -17,3 +17,19 @@ ALLOWED_SEARCH_DIRS = [
     str(Path.home() / "Desktop"),
     str(Path.home() / "Downloads"),
 ]
+
+# Programas que el asistente puede abrir (Fase 1, herramienta "abrir programa o web").
+# La clave es la palabra que usa el usuario; el valor es el ejecutable exacto que se
+# pasa a subprocess.Popen como lista (nunca como texto libre en una shell).
+PROGRAMAS_PERMITIDOS = {
+    "bloc de notas": "notepad.exe",
+    "calculadora": "calc.exe",
+    "explorador": "explorer.exe",
+}
+
+# Páginas web que el asistente puede abrir. La clave es la palabra que usa el
+# usuario; el valor es la URL exacta que se pasa a webbrowser.open().
+SITIOS_PERMITIDOS = {
+    "youtube": "https://youtube.com",
+    "github": "https://github.com",
+}
