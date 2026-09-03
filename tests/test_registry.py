@@ -46,3 +46,11 @@ def test_notas_registradas_y_con_forma_correcta():
         assert callable(entrada["func"])
         assert entrada["permission"] in PERMISOS_VALIDOS
         assert isinstance(entrada["description"], str) and entrada["description"]
+
+
+def test_buscar_archivos_registrada_y_con_forma_correcta():
+    entrada = TOOLS["buscar_archivos"]
+
+    assert callable(entrada["func"])
+    assert entrada["permission"] in PERMISOS_VALIDOS
+    assert isinstance(entrada["description"], str) and entrada["description"]

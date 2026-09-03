@@ -65,3 +65,11 @@ def test_reconoce_consultar_notas():
     resultado = interpret("¿cuáles son mis notas?")
 
     assert resultado == ToolCall(tool_name="consultar_notas", params={})
+
+
+def test_reconoce_buscar_archivo():
+    resultado = interpret("busca archivo reporte")
+
+    assert resultado == ToolCall(
+        tool_name="buscar_archivos", params={"nombre": "reporte"}
+    )

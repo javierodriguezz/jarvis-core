@@ -102,3 +102,41 @@ def test_consultar_notas_con_notas(tmp_path, monkeypatch):
 
     assert "primera" in resultado
     assert "segunda" in resultado
+
+
+def test_buscar_archivos_encuentra_coincidencia(tmp_path, monkeypatch):
+    carpeta = tmp_path / "Desktop"
+    carpeta.mkdir()
+    (carpeta / "reporte_final.txt").write_text("contenido")
+    (carpeta / "otro.txt").write_text("contenido")
+    monkeypatch.setattr(basic_tools.config, "ALLOWED_SEARCH_DIRS", [str(carpeta)])
+
+    resultado = basic_tools.buscar_archivos("reporte")
+
+    assert "reporte_final.txt" in resultado
+    assert "otro.txt" not in resultado
+
+
+def test_buscar_archivos_sin_coincidencias(tmp_path, monkeypatch):
+    carpeta = tmp_path / "Desktop"
+    carpeta.mkdir()
+    monkeypatch.setattr(basic_tools.config, "ALLOWED_SEARCH_DIRS", [str(carpeta)])
+
+    resultado = basic_tools.buscar_archivos("inexistente")
+
+    assert "no encontré" in resultado.lower()
+
+
+def test_buscar_archivos_avisa_carpeta_faltante(tmp_path, monkeypatch):
+    carpeta_faltante = tmp_path / "no_existe"
+    monkeypatch.setattr(basic_tools.config, "ALLOWED_SEARCH_DIRS", [str(carpeta_faltante)])
+
+    resultado = basic_tools.buscar_archivos("algo")
+
+    assert str(carpeta_faltante) in resultado
+
+
+def test_buscar_archivos_texto_vacio_no_busca():
+    resultado = basic_tools.buscar_archivos("   ")
+
+    assert "dime qué archivo" in resultado.lower()

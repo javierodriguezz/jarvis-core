@@ -34,4 +34,9 @@ TOOLS = {
         "permission": "SAFE",
         "description": "Muestra todas las notas guardadas.",
     },
+    "buscar_archivos": {
+        "func": basic_tools.buscar_archivos,
+        "permission": "SAFE",
+        "description": "Busca archivos por nombre dentro de las carpetas permitidas.",
+    },
 }
