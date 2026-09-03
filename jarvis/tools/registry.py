@@ -39,6 +39,11 @@ TOOLS = {
         "permission": "CONFIRM",
         "description": "Borra una nota guardada por su número. Acción destructiva.",
     },
+    "sobrescribir_nota": {
+        "func": basic_tools.sobrescribir_nota,
+        "permission": "CONFIRM",
+        "description": "Reemplaza el texto de una nota existente por su número. Acción destructiva.",
+    },
     "buscar_archivos": {
         "func": basic_tools.buscar_archivos,
         "permission": "SAFE",

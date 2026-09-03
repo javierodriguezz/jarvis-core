@@ -81,6 +81,21 @@ def test_reconoce_borrar_nota():
     assert resultado == ToolCall(tool_name="borrar_nota", params={"numero": "2"})
 
 
+def test_reconoce_sobrescribir_nota():
+    resultado = interpret("sobrescribe la nota 2 con comprar leche")
+
+    assert resultado == ToolCall(
+        tool_name="sobrescribir_nota",
+        params={"numero": "2", "texto_nuevo": "comprar leche"},
+    )
+
+
+def test_sobrescribir_nota_sin_formato_valido_no_reconoce():
+    resultado = interpret("sobrescribe la nota como sea")
+
+    assert resultado is None
+
+
 def test_reconoce_pregunta_predefinida():
     resultado = interpret("¿Cómo te llamas?")
 

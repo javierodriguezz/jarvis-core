@@ -54,3 +54,34 @@ def test_delete_note_indice_invalido_no_borra_nada(tmp_path, monkeypatch):
 
     assert resultado is None
     assert len(notes_store.list_notes()) == 1
+
+
+def test_update_note_reemplaza_el_texto(tmp_path, monkeypatch):
+    monkeypatch.setattr(notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    notes_store.add_note("comprar pan")
+
+    nota_actualizada = notes_store.update_note(1, "comprar leche")
+
+    assert nota_actualizada["texto"] == "comprar leche"
+    assert "editada" in nota_actualizada
+    assert notes_store.list_notes()[0]["texto"] == "comprar leche"
+
+
+def test_update_note_conserva_fecha_de_creacion(tmp_path, monkeypatch):
+    monkeypatch.setattr(notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    notes_store.add_note("comprar pan")
+    creada_original = notes_store.list_notes()[0]["creada"]
+
+    nota_actualizada = notes_store.update_note(1, "comprar leche")
+
+    assert nota_actualizada["creada"] == creada_original
+
+
+def test_update_note_indice_invalido_no_modifica_nada(tmp_path, monkeypatch):
+    monkeypatch.setattr(notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    notes_store.add_note("única")
+
+    resultado = notes_store.update_note(99, "texto nuevo")
+
+    assert resultado is None
+    assert notes_store.list_notes()[0]["texto"] == "única"

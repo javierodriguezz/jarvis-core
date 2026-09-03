@@ -133,6 +133,46 @@ def test_borrar_nota_numero_invalido_no_llama_notes_store(monkeypatch):
     assert "no es un número" in resultado.lower()
 
 
+def test_sobrescribir_nota_valida(tmp_path, monkeypatch):
+    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    basic_tools.crear_nota("comprar pan")
+
+    resultado = basic_tools.sobrescribir_nota("1", "comprar leche")
+
+    assert "comprar leche" in resultado
+    assert basic_tools.notes_store.list_notes()[0]["texto"] == "comprar leche"
+
+
+def test_sobrescribir_nota_numero_inexistente(tmp_path, monkeypatch):
+    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+
+    resultado = basic_tools.sobrescribir_nota("5", "texto nuevo")
+
+    assert "no encontré" in resultado.lower()
+
+
+def test_sobrescribir_nota_numero_invalido_no_llama_notes_store(monkeypatch):
+    def falla_si_se_llama(*_args, **_kwargs):
+        raise AssertionError("no debería tocar notes_store con un número inválido")
+
+    monkeypatch.setattr(basic_tools.notes_store, "update_note", falla_si_se_llama)
+
+    resultado = basic_tools.sobrescribir_nota("dos", "texto nuevo")
+
+    assert "no es un número" in resultado.lower()
+
+
+def test_sobrescribir_nota_texto_vacio_no_llama_notes_store(monkeypatch):
+    def falla_si_se_llama(*_args, **_kwargs):
+        raise AssertionError("no debería tocar notes_store con texto vacío")
+
+    monkeypatch.setattr(basic_tools.notes_store, "update_note", falla_si_se_llama)
+
+    resultado = basic_tools.sobrescribir_nota("1", "   ")
+
+    assert "vacía" in resultado.lower()
+
+
 def test_buscar_archivos_encuentra_coincidencia(tmp_path, monkeypatch):
     carpeta = tmp_path / "Desktop"
     carpeta.mkdir()

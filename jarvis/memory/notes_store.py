@@ -62,3 +62,21 @@ def delete_note(indice: int) -> dict | None:
     nota = notas.pop(posicion)
     _guardar_notas(notas)
     return nota
+
+
+def update_note(indice: int, texto_nuevo: str) -> dict | None:
+    """Sobrescribe el texto de la nota en la posición 'indice' (1-based).
+
+    Regresa la nota ya actualizada, o None si el índice no corresponde a
+    ninguna nota. Guarda un campo 'editada' con la fecha del cambio, sin
+    tocar 'creada' -- así queda rastro de que la nota se modificó.
+    """
+    notas = _leer_notas()
+    posicion = indice - 1
+    if posicion < 0 or posicion >= len(notas):
+        return None
+
+    notas[posicion]["texto"] = texto_nuevo
+    notas[posicion]["editada"] = datetime.now().isoformat(timespec="seconds")
+    _guardar_notas(notas)
+    return notas[posicion]

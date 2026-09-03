@@ -10,6 +10,7 @@ regresa) se mantiene igual -- por eso el resto del sistema no necesita
 cambiar cuando lleguemos a esa fase.
 """
 
+import re
 from dataclasses import dataclass
 
 
@@ -38,6 +39,14 @@ PALABRAS_CLAVE_BORRAR_NOTA = (
     "elimina la nota ",
     "elimina nota ",
 )
+PREFIJOS_SOBRESCRIBIR_NOTA = (
+    "sobrescribe la nota ",
+    "sobrescribe nota ",
+    "cambia la nota ",
+    "actualiza la nota ",
+)
+# Después del prefijo espera "<número> con <texto nuevo>", ej. "2 con comprar leche".
+PATRON_SOBRESCRIBIR_NOTA = re.compile(r"^(\d+)\s+con\s+(.+)$", re.IGNORECASE)
 PALABRAS_CLAVE_PREGUNTA = (
     "cómo te llamas",
     "como te llamas",
@@ -80,6 +89,21 @@ def interpret(user_text: str) -> ToolCall | None:
         if palabra in texto:
             numero = texto.split(palabra, 1)[1].strip()
             return ToolCall(tool_name="borrar_nota", params={"numero": numero})
+
+    for prefijo in PREFIJOS_SOBRESCRIBIR_NOTA:
+        if prefijo in texto:
+            # user_text para conservar mayúsculas/acentos del texto nuevo;
+            # la posición del prefijo es la misma en texto y user_text
+            # porque .lower() no cambia la longitud de estos caracteres.
+            inicio = texto.find(prefijo) + len(prefijo)
+            resto = user_text[inicio:].strip()
+            coincidencia = PATRON_SOBRESCRIBIR_NOTA.match(resto)
+            if coincidencia:
+                numero, texto_nuevo = coincidencia.groups()
+                return ToolCall(
+                    tool_name="sobrescribir_nota",
+                    params={"numero": numero, "texto_nuevo": texto_nuevo},
+                )
 
     for palabra in PALABRAS_CLAVE_BUSCAR_ARCHIVO:
         if palabra in texto:

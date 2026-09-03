@@ -118,6 +118,28 @@ def borrar_nota(numero: str) -> str:
     return f"Nota {numero} borrada: {nota['texto']}"
 
 
+def sobrescribir_nota(numero: str, texto_nuevo: str) -> str:
+    """Reemplaza el texto de la nota con el número indicado por texto_nuevo.
+
+    Es una acción destructiva (se pierde el texto anterior de la nota) --
+    se registra con permiso CONFIRM en registry.py, así que executor.py
+    pide confirmación antes de llamarla.
+    """
+    numero = numero.strip()
+    if not numero.isdigit():
+        return f"'{numero}' no es un número de nota válido."
+
+    texto_nuevo = texto_nuevo.strip()
+    if not texto_nuevo:
+        return "No puedo dejar una nota vacía; dime el texto nuevo."
+
+    nota = notes_store.update_note(int(numero), texto_nuevo)
+    if nota is None:
+        return f"No encontré ninguna nota con el número {numero}."
+
+    return f"Nota {numero} actualizada: {nota['texto']}"
+
+
 def buscar_archivos(nombre: str) -> str:
     """Busca archivos cuyo nombre contenga 'nombre' dentro de las carpetas permitidas.
 
