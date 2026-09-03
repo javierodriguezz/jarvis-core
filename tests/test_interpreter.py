@@ -75,6 +75,12 @@ def test_reconoce_buscar_archivo():
     )
 
 
+def test_reconoce_borrar_nota():
+    resultado = interpret("borra la nota 2")
+
+    assert resultado == ToolCall(tool_name="borrar_nota", params={"numero": "2"})
+
+
 def test_reconoce_pregunta_predefinida():
     resultado = interpret("¿Cómo te llamas?")
 

@@ -32,6 +32,12 @@ PALABRAS_CLAVE_BUSCAR_ARCHIVO = (
     "buscar archivo ",
     "encuentra archivo ",
 )
+PALABRAS_CLAVE_BORRAR_NOTA = (
+    "borra la nota ",
+    "borra nota ",
+    "elimina la nota ",
+    "elimina nota ",
+)
 PALABRAS_CLAVE_PREGUNTA = (
     "cómo te llamas",
     "como te llamas",
@@ -69,6 +75,11 @@ def interpret(user_text: str) -> ToolCall | None:
 
     if any(palabra in texto for palabra in PALABRAS_CLAVE_CONSULTAR_NOTAS):
         return ToolCall(tool_name="consultar_notas", params={})
+
+    for palabra in PALABRAS_CLAVE_BORRAR_NOTA:
+        if palabra in texto:
+            numero = texto.split(palabra, 1)[1].strip()
+            return ToolCall(tool_name="borrar_nota", params={"numero": numero})
 
     for palabra in PALABRAS_CLAVE_BUSCAR_ARCHIVO:
         if palabra in texto:

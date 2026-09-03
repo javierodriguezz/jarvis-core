@@ -101,6 +101,23 @@ def consultar_notas() -> str:
     return "\n".join(lineas)
 
 
+def borrar_nota(numero: str) -> str:
+    """Borra la nota con el número indicado (el mismo que muestra consultar_notas).
+
+    Es una acción destructiva -- se registra con permiso CONFIRM en
+    registry.py, así que executor.py pide confirmación antes de llamarla.
+    """
+    numero = numero.strip()
+    if not numero.isdigit():
+        return f"'{numero}' no es un número de nota válido."
+
+    nota = notes_store.delete_note(int(numero))
+    if nota is None:
+        return f"No encontré ninguna nota con el número {numero}."
+
+    return f"Nota {numero} borrada: {nota['texto']}"
+
+
 def buscar_archivos(nombre: str) -> str:
     """Busca archivos cuyo nombre contenga 'nombre' dentro de las carpetas permitidas.
 

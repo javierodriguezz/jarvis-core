@@ -45,3 +45,20 @@ def add_note(texto: str) -> dict:
 def list_notes() -> list[dict]:
     """Regresa todas las notas guardadas, en el orden en que se crearon."""
     return _leer_notas()
+
+
+def delete_note(indice: int) -> dict | None:
+    """Borra la nota en la posición 'indice' (1-based, como se ve en list_notes).
+
+    Regresa la nota borrada, o None si el índice no corresponde a ninguna
+    nota -- así basic_tools.borrar_nota puede distinguir "borré algo" de
+    "ese número no existe" sin necesidad de excepciones.
+    """
+    notas = _leer_notas()
+    posicion = indice - 1
+    if posicion < 0 or posicion >= len(notas):
+        return None
+
+    nota = notas.pop(posicion)
+    _guardar_notas(notas)
+    return nota

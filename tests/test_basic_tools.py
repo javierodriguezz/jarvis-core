@@ -104,6 +104,35 @@ def test_consultar_notas_con_notas(tmp_path, monkeypatch):
     assert "segunda" in resultado
 
 
+def test_borrar_nota_valida(tmp_path, monkeypatch):
+    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    basic_tools.crear_nota("comprar pan")
+
+    resultado = basic_tools.borrar_nota("1")
+
+    assert "comprar pan" in resultado
+    assert basic_tools.notes_store.list_notes() == []
+
+
+def test_borrar_nota_numero_inexistente(tmp_path, monkeypatch):
+    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+
+    resultado = basic_tools.borrar_nota("5")
+
+    assert "no encontré" in resultado.lower()
+
+
+def test_borrar_nota_numero_invalido_no_llama_notes_store(monkeypatch):
+    def falla_si_se_llama(*_args, **_kwargs):
+        raise AssertionError("no debería tocar notes_store con un número inválido")
+
+    monkeypatch.setattr(basic_tools.notes_store, "delete_note", falla_si_se_llama)
+
+    resultado = basic_tools.borrar_nota("dos")
+
+    assert "no es un número" in resultado.lower()
+
+
 def test_buscar_archivos_encuentra_coincidencia(tmp_path, monkeypatch):
     carpeta = tmp_path / "Desktop"
     carpeta.mkdir()

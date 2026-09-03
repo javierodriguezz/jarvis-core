@@ -32,3 +32,25 @@ def test_add_note_conserva_notas_previas(tmp_path, monkeypatch):
 
     textos = [n["texto"] for n in notes_store.list_notes()]
     assert textos == ["primera", "segunda"]
+
+
+def test_delete_note_borra_la_nota_correcta(tmp_path, monkeypatch):
+    monkeypatch.setattr(notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    notes_store.add_note("primera")
+    notes_store.add_note("segunda")
+
+    nota_borrada = notes_store.delete_note(1)
+
+    assert nota_borrada["texto"] == "primera"
+    textos = [n["texto"] for n in notes_store.list_notes()]
+    assert textos == ["segunda"]
+
+
+def test_delete_note_indice_invalido_no_borra_nada(tmp_path, monkeypatch):
+    monkeypatch.setattr(notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    notes_store.add_note("única")
+
+    resultado = notes_store.delete_note(99)
+
+    assert resultado is None
+    assert len(notes_store.list_notes()) == 1

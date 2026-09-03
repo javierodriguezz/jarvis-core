@@ -48,6 +48,14 @@ def test_notas_registradas_y_con_forma_correcta():
         assert isinstance(entrada["description"], str) and entrada["description"]
 
 
+def test_borrar_nota_registrada_y_es_confirm():
+    entrada = TOOLS["borrar_nota"]
+
+    assert callable(entrada["func"])
+    assert entrada["permission"] == "CONFIRM"
+    assert isinstance(entrada["description"], str) and entrada["description"]
+
+
 def test_buscar_archivos_registrada_y_con_forma_correcta():
     entrada = TOOLS["buscar_archivos"]
 

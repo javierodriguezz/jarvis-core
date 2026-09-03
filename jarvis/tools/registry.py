@@ -34,6 +34,11 @@ TOOLS = {
         "permission": "SAFE",
         "description": "Muestra todas las notas guardadas.",
     },
+    "borrar_nota": {
+        "func": basic_tools.borrar_nota,
+        "permission": "CONFIRM",
+        "description": "Borra una nota guardada por su número. Acción destructiva.",
+    },
     "buscar_archivos": {
         "func": basic_tools.buscar_archivos,
         "permission": "SAFE",
