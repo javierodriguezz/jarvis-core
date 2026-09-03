@@ -120,10 +120,12 @@ Inicio automático con el sistema (Task Scheduler de Windows), manejo robusto de
 
 ## 5. Próximo paso inmediato
 
-Fase 0, Fase 1 y Fase 2 completas.
+Fase 0, Fase 1, Fase 2 y Fase 3 completas.
 
-Fase 1: las 5 herramientas iniciales (hora y fecha, abrir programa o web, crear/consultar notas, buscar archivos, responder preguntas sencillas) están implementadas, registradas en `jarvis/tools/registry.py`, conectadas al intérprete de reglas simples, y cada una tiene al menos una prueba en `tests/`.
+Fase 1: las 5 herramientas iniciales (hora y fecha, abrir programa o web, crear/consultar notas, buscar archivos, responder preguntas sencillas) están implementadas, registradas en `jarvis/tools/registry.py`, y cada una tiene al menos una prueba en `tests/`.
 
-Fase 2: el sistema de confirmación de `jarvis/core/executor.py` (permiso `CONFIRM`, pide s/n antes de ejecutar) ya se ejercita con dos acciones destructivas reales -- `borrar_nota` y `sobrescribir_nota` -- además de las pruebas de punta a punta que confirman el flujo completo (texto del usuario -> intérprete -> confirmación -> acción) en `tests/test_executor.py`.
+Fase 2: el sistema de confirmación de `jarvis/core/executor.py` (permiso `CONFIRM`, pide s/n antes de ejecutar) se ejercita con dos acciones destructivas reales -- `borrar_nota` y `sobrescribir_nota` -- además de pruebas de punta a punta que confirman el flujo completo.
 
-Siguiente paso: Fase 3, conectar un modelo de lenguaje local con Ollama. `interpreter.py` cambia de reglas fijas a usar el LLM para decidir qué herramienta llamar, pero `executor.py` sigue validando y pidiendo confirmación igual que ahora -- el LLM decide, nunca ejecuta directo.
+Fase 3: Ollama instalado localmente con el modelo `llama3.2` (3B). `jarvis/core/interpreter.py` ya no usa palabras clave -- `interpret()` arma un prompt con la lista de herramientas (sacada directo de `registry.py` con `inspect.signature`, nunca escrita a mano) vía `jarvis/core/llm_client.py`, y valida la respuesta del modelo antes de convertirla en `ToolCall`: si el JSON viene mal formado, si inventa una herramienta que no existe, o si los parámetros no coinciden con los que la herramienta espera, se trata igual que "no entendí" -- nunca se ejecuta nada a ciegas. `executor.py` no cambió: sigue validando contra el registro y pidiendo confirmación exactamente igual que antes. `main.py` distingue "Ollama no responde" (error de conexión) de "no entendí la instrucción" (el modelo respondió pero no encontró herramienta aplicable).
+
+Siguiente paso: Fase 4, reemplazar el JSON de notas por una base de datos SQLite (notas, preferencias, historial de conversación).

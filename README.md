@@ -6,7 +6,7 @@ Ver el plan completo, la arquitectura y el roadmap por fases en [`docs/ROADMAP.m
 
 ## Estado actual
 
-Fase 1 y Fase 2 completas: asistente de consola con intérprete de reglas simples (palabras clave), las 5 herramientas iniciales y confirmación antes de acciones destructivas.
+Fase 1, Fase 2 y Fase 3 completas: asistente de consola cuyo intérprete usa un modelo de lenguaje local (Ollama + `llama3.2`) para decidir qué herramienta llamar, las 5 herramientas iniciales, y confirmación antes de acciones destructivas.
 
 Herramientas `SAFE` (se ejecutan sin preguntar):
 
@@ -21,9 +21,11 @@ Herramientas `CONFIRM` (piden confirmación s/n antes de ejecutarse):
 - Borrar una nota guardada.
 - Sobrescribir el texto de una nota existente.
 
-Siguiente paso: Fase 3 (conectar un modelo de lenguaje local con Ollama). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Siguiente paso: Fase 4 (memoria persistente con SQLite). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Cómo correrlo
+
+Requiere [Ollama](https://ollama.com) instalado y corriendo, con el modelo `llama3.2` descargado (`ollama pull llama3.2`).
 
 ```bash
 python -m venv venv
