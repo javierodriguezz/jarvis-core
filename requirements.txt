@@ -2,3 +2,6 @@
 # Iremos agregando aquí conforme avancemos de fase (Ollama client, whisper, piper, etc.)
 python-dotenv
 pytest
+
+# Fase 3: cliente HTTP para hablar con el servicio local de Ollama.
+requests

@@ -33,3 +33,9 @@ SITIOS_PERMITIDOS = {
     "youtube": "https://youtube.com",
     "github": "https://github.com",
 }
+
+# Fase 3: servicio local de Ollama (debe estar corriendo en la máquina) y
+# el modelo que se le pide. OLLAMA_HOST no lleva ninguna ruta al final --
+# cada función de llm_client.py agrega la suya (ej. /api/generate).
+OLLAMA_HOST = "http://localhost:11434"
+OLLAMA_MODEL = "llama3.2"
