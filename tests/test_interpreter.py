@@ -1,35 +1,41 @@
 """
 Pruebas del intérprete (jarvis/core/interpreter.py).
+
+Desde la Fase 3, interpret() habla con Ollama a través de llm_client.generar.
+Estas pruebas nunca llaman al Ollama real: reemplazan llm_client.generar por
+una versión falsa que regresa un texto fijo, y verifican que interpret()
+sepa convertir (o rechazar) esa respuesta correctamente. Así las pruebas
+corren rápido y no dependen de que el servicio esté encendido.
 """
 
+import json
+
+import pytest
+import requests
+
+from jarvis.core import interpreter
 from jarvis.core.interpreter import ToolCall, interpret
 
 
-def test_reconoce_pregunta_por_la_hora():
-    resultado = interpret("¿qué hora es?")
+def _responder_con(monkeypatch, texto: str):
+    """Hace que llm_client.generar() regrese 'texto' sin llamar a Ollama de verdad."""
+    monkeypatch.setattr(interpreter.llm_client, "generar", lambda _prompt: texto)
+
+
+def test_reconoce_herramienta_sin_parametros(monkeypatch):
+    _responder_con(monkeypatch, '{"tool_name": "decir_hora", "params": {}}')
+
+    resultado = interpret("qué hora es")
 
     assert resultado == ToolCall(tool_name="decir_hora", params={})
 
 
-def test_reconoce_pregunta_por_la_fecha():
-    resultado = interpret("dime la fecha de hoy")
+def test_reconoce_herramienta_con_parametros(monkeypatch):
+    _responder_con(
+        monkeypatch,
+        '{"tool_name": "abrir_programa_o_web", "params": {"nombre": "youtube"}}',
+    )
 
-    assert resultado == ToolCall(tool_name="decir_hora", params={})
-
-
-def test_no_distingue_mayusculas():
-    resultado = interpret("QUÉ HORA ES")
-
-    assert resultado == ToolCall(tool_name="decir_hora", params={})
-
-
-def test_texto_no_reconocido_devuelve_none():
-    resultado = interpret("cuéntame un chiste")
-
-    assert resultado is None
-
-
-def test_reconoce_abrir_programa_o_web():
     resultado = interpret("abre youtube")
 
     assert resultado == ToolCall(
@@ -37,76 +43,87 @@ def test_reconoce_abrir_programa_o_web():
     )
 
 
-def test_reconoce_abrir_con_variante_infinitivo():
-    resultado = interpret("quiero abrir github")
+def test_tool_name_null_devuelve_none(monkeypatch):
+    _responder_con(monkeypatch, '{"tool_name": null, "params": {}}')
 
-    assert resultado == ToolCall(
-        tool_name="abrir_programa_o_web", params={"nombre": "github"}
+    assert interpret("cuéntame un chiste") is None
+
+
+def test_json_invalido_devuelve_none(monkeypatch):
+    _responder_con(monkeypatch, "esto no es JSON para nada")
+
+    assert interpret("algo") is None
+
+
+def test_herramienta_inventada_no_existe_devuelve_none(monkeypatch):
+    # El modelo puede alucinar un nombre de herramienta que no está en el
+    # registro -- interpret() nunca debe confiar en eso a ciegas.
+    _responder_con(monkeypatch, '{"tool_name": "formatear_disco", "params": {}}')
+
+    assert interpret("borra todo") is None
+
+
+def test_parametros_de_mas_devuelve_none(monkeypatch):
+    _responder_con(
+        monkeypatch,
+        '{"tool_name": "decir_hora", "params": {"zona_horaria": "CDMX"}}',
     )
 
+    assert interpret("qué hora es") is None
 
-def test_reconoce_crear_nota_con_anota_que():
-    resultado = interpret("anota que hoy es viernes")
 
-    assert resultado == ToolCall(
-        tool_name="crear_nota", params={"texto": "hoy es viernes"}
+def test_parametros_faltantes_devuelve_none(monkeypatch):
+    _responder_con(
+        monkeypatch, '{"tool_name": "abrir_programa_o_web", "params": {}}'
     )
 
+    assert interpret("abre algo") is None
 
-def test_reconoce_crear_nota_con_apunta():
-    resultado = interpret("apunta comprar leche")
 
-    assert resultado == ToolCall(
-        tool_name="crear_nota", params={"texto": "comprar leche"}
+def test_extrae_json_aunque_venga_con_texto_alrededor(monkeypatch):
+    _responder_con(
+        monkeypatch,
+        'Claro, aquí está: {"tool_name": "decir_hora", "params": {}} espero que ayude.',
     )
 
+    resultado = interpret("qué hora es")
 
-def test_reconoce_consultar_notas():
-    resultado = interpret("¿cuáles son mis notas?")
-
-    assert resultado == ToolCall(tool_name="consultar_notas", params={})
+    assert resultado == ToolCall(tool_name="decir_hora", params={})
 
 
-def test_reconoce_buscar_archivo():
-    resultado = interpret("busca archivo reporte")
+def test_propaga_error_de_conexion_con_ollama(monkeypatch):
+    def generar_que_falla(_prompt):
+        raise requests.ConnectionError("Ollama no está corriendo")
 
-    assert resultado == ToolCall(
-        tool_name="buscar_archivos", params={"nombre": "reporte"}
-    )
+    monkeypatch.setattr(interpreter.llm_client, "generar", generar_que_falla)
 
-
-def test_reconoce_borrar_nota():
-    resultado = interpret("borra la nota 2")
-
-    assert resultado == ToolCall(tool_name="borrar_nota", params={"numero": "2"})
+    with pytest.raises(requests.ConnectionError):
+        interpret("qué hora es")
 
 
-def test_reconoce_sobrescribir_nota():
-    resultado = interpret("sobrescribe la nota 2 con comprar leche")
+def test_prompt_incluye_la_instruccion_del_usuario(monkeypatch):
+    prompts_recibidos = []
 
-    assert resultado == ToolCall(
-        tool_name="sobrescribir_nota",
-        params={"numero": "2", "texto_nuevo": "comprar leche"},
-    )
+    def generar_falso(prompt):
+        prompts_recibidos.append(prompt)
+        return '{"tool_name": "decir_hora", "params": {}}'
 
+    monkeypatch.setattr(interpreter.llm_client, "generar", generar_falso)
 
-def test_sobrescribir_nota_sin_formato_valido_no_reconoce():
-    resultado = interpret("sobrescribe la nota como sea")
+    interpret("qué hora es en este momento")
 
-    assert resultado is None
-
-
-def test_reconoce_pregunta_predefinida():
-    resultado = interpret("¿Cómo te llamas?")
-
-    assert resultado == ToolCall(
-        tool_name="responder_pregunta", params={"pregunta": "¿Cómo te llamas?"}
-    )
+    assert "qué hora es en este momento" in prompts_recibidos[0]
+    assert "decir_hora" in prompts_recibidos[0]
 
 
-def test_reconoce_pregunta_de_calculo():
-    resultado = interpret("cuánto es 2 + 2")
+def test_describir_herramientas_incluye_todas_las_registradas():
+    from jarvis.tools.registry import TOOLS
 
-    assert resultado == ToolCall(
-        tool_name="responder_pregunta", params={"pregunta": "cuánto es 2 + 2"}
-    )
+    descripcion = interpreter._describir_herramientas()
+
+    for nombre in TOOLS:
+        assert nombre in descripcion
+
+
+def test_extraer_bloque_json_sin_llaves_devuelve_none():
+    assert interpreter._extraer_bloque_json("sin json aquí") is None

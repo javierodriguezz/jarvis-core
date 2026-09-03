@@ -1,17 +1,26 @@
 """
 Intérprete de instrucciones.
 
-Fase 1: reglas simples (palabras clave / regex) que deciden qué herramienta
-llamar y con qué parámetros.
+Fase 1-2: reglas simples (palabras clave / regex).
 
-Fase 3: esta misma función se reemplaza internamente por una llamada a un
-modelo de lenguaje local (Ollama), pero la firma (lo que recibe y lo que
-regresa) se mantiene igual -- por eso el resto del sistema no necesita
-cambiar cuando lleguemos a esa fase.
+Fase 3 (actual): interpret() usa un modelo de lenguaje local vía Ollama
+(jarvis/core/llm_client.py) para decidir qué herramienta llamar y con qué
+parámetros. La firma de interpret() (lo que recibe y lo que regresa) es la
+misma de siempre -- por eso executor.py y main.py no cambiaron nada.
+
+Regla importante: nunca se confía ciegamente en lo que responde el modelo.
+Todo lo que dice se valida contra jarvis/tools/registry.py (la lista blanca
+real) antes de convertirse en un ToolCall. Si algo no cuadra -- JSON mal
+formado, herramienta inventada, parámetros que no corresponden -- se trata
+igual que "no entendí" (se regresa None), nunca se ejecuta a ciegas.
 """
 
-import re
+import inspect
+import json
 from dataclasses import dataclass
+
+from jarvis.core import llm_client
+from jarvis.tools import registry
 
 
 @dataclass
@@ -20,104 +29,110 @@ class ToolCall:
     params: dict
 
 
-PALABRAS_CLAVE_HORA = ("hora", "fecha", "qué día es", "que dia es")
-PALABRAS_CLAVE_ABRIR = ("abre ", "abrir ")
-PALABRAS_CLAVE_CONSULTAR_NOTAS = (
-    "mis notas",
-    "las notas",
-    "qué notas tengo",
-    "que notas tengo",
-)
-PALABRAS_CLAVE_BUSCAR_ARCHIVO = (
-    "busca archivo ",
-    "buscar archivo ",
-    "encuentra archivo ",
-)
-PALABRAS_CLAVE_BORRAR_NOTA = (
-    "borra la nota ",
-    "borra nota ",
-    "elimina la nota ",
-    "elimina nota ",
-)
-PREFIJOS_SOBRESCRIBIR_NOTA = (
-    "sobrescribe la nota ",
-    "sobrescribe nota ",
-    "cambia la nota ",
-    "actualiza la nota ",
-)
-# Después del prefijo espera "<número> con <texto nuevo>", ej. "2 con comprar leche".
-PATRON_SOBRESCRIBIR_NOTA = re.compile(r"^(\d+)\s+con\s+(.+)$", re.IGNORECASE)
-PALABRAS_CLAVE_PREGUNTA = (
-    "cómo te llamas",
-    "como te llamas",
-    "quién te hizo",
-    "quien te hizo",
-    "qué puedes hacer",
-    "que puedes hacer",
-    "cuánto es",
-    "cuanto es",
-    "cuánto son",
-    "cuanto son",
-)
-# Prefijos más específicos primero, para no dejar un "que" colgando en el
-# texto de la nota (ej. "anota que hoy es viernes" -> "hoy es viernes").
-PREFIJOS_CREAR_NOTA = ("anota que ", "apunta que ", "anota ", "apunta ")
+PROMPT_BASE = """Eres el intérprete de un asistente llamado Jarvis. Tu única tarea es decidir qué herramienta de la siguiente lista corresponde a la instrucción del usuario, y con qué parámetros.
+
+Herramientas disponibles:
+{herramientas}
+
+Reglas:
+- Responde ÚNICAMENTE con un objeto JSON, sin texto antes ni después, sin explicaciones.
+- El formato exacto es: {{"tool_name": "<nombre_de_la_herramienta>", "params": {{...}}}}
+- Los parámetros deben ser exactamente los que pide la herramienta elegida, como texto (string).
+- Si ninguna herramienta aplica a la instrucción, responde exactamente: {{"tool_name": null, "params": {{}}}}
+
+Ejemplos:
+Instrucción: "qué hora es"
+Respuesta: {{"tool_name": "decir_hora", "params": {{}}}}
+
+Instrucción: "abre youtube"
+Respuesta: {{"tool_name": "abrir_programa_o_web", "params": {{"nombre": "youtube"}}}}
+
+Instrucción: "anota que hoy es viernes"
+Respuesta: {{"tool_name": "crear_nota", "params": {{"texto": "hoy es viernes"}}}}
+
+Instrucción: "cuéntame un chiste"
+Respuesta: {{"tool_name": null, "params": {{}}}}
+
+Instrucción del usuario: "{instruccion}"
+Respuesta:"""
+
+
+def _describir_herramientas() -> str:
+    """Arma la lista de herramientas y sus parámetros para meterla en el prompt.
+
+    Los parámetros se sacan con inspect.signature() directo de la función
+    real registrada, no se escriben a mano -- así el prompt nunca se
+    desincroniza de lo que basic_tools.py realmente espera.
+    """
+    lineas = []
+    for nombre, entrada in registry.TOOLS.items():
+        parametros = list(inspect.signature(entrada["func"]).parameters.keys())
+        parametros_texto = ", ".join(parametros) if parametros else "ninguno"
+        lineas.append(f"- {nombre}: {entrada['description']} (parámetros: {parametros_texto})")
+    return "\n".join(lineas)
+
+
+def _extraer_bloque_json(texto: str) -> str | None:
+    """Recorta desde la primera '{' hasta la última '}' de 'texto'.
+
+    Los modelos chicos a veces agregan texto extra alrededor del JSON aunque
+    se les pida que no lo hagan; esto rescata el bloque aunque venga rodeado
+    de prosa. Si no hay ni un '{' o un '}', regresa None.
+    """
+    inicio = texto.find("{")
+    fin = texto.rfind("}")
+    if inicio == -1 or fin == -1 or fin < inicio:
+        return None
+    return texto[inicio : fin + 1]
+
+
+def _parsear_respuesta_llm(texto_llm: str) -> ToolCall | None:
+    """Convierte la respuesta cruda del modelo en un ToolCall, o None si no se puede confiar en ella.
+
+    Aquí es donde se aplica la regla de "nunca confiar ciegamente en la
+    salida de un modelo": se verifica que sea JSON válido, que tool_name
+    exista de verdad en registry.TOOLS, y que params traiga exactamente los
+    nombres que esa herramienta espera -- ni más ni menos.
+    """
+    bloque = _extraer_bloque_json(texto_llm)
+    if bloque is None:
+        return None
+
+    try:
+        datos = json.loads(bloque)
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(datos, dict):
+        return None
+
+    tool_name = datos.get("tool_name")
+    params = datos.get("params", {})
+
+    if not isinstance(tool_name, str) or tool_name not in registry.TOOLS:
+        return None
+    if not isinstance(params, dict):
+        return None
+
+    parametros_esperados = set(inspect.signature(registry.TOOLS[tool_name]["func"]).parameters)
+    if set(params.keys()) != parametros_esperados:
+        return None
+    if not all(isinstance(valor, str) for valor in params.values()):
+        return None
+
+    return ToolCall(tool_name=tool_name, params=params)
 
 
 def interpret(user_text: str) -> ToolCall | None:
-    """Traduce texto libre del usuario a una llamada de herramienta.
+    """Traduce texto libre del usuario a una llamada de herramienta, usando el LLM local.
 
-    Devuelve None si no reconoce ninguna instrucción.
+    Si Ollama no está corriendo o la petición falla, la excepción de
+    requests se deja propagar (llm_client.generar no la esconde) -- quien
+    llame a interpret() (main.py) decide cómo avisarle al usuario que el
+    problema es de conexión, distinto de "no entendí la instrucción".
     """
-    texto = user_text.lower()
-
-    if any(palabra in texto for palabra in PALABRAS_CLAVE_HORA):
-        return ToolCall(tool_name="decir_hora", params={})
-
-    for palabra in PALABRAS_CLAVE_ABRIR:
-        if palabra in texto:
-            # Todo lo que sigue a "abre"/"abrir" es el nombre a buscar en la
-            # lista blanca; el intérprete no valida esa lista, solo extrae
-            # la intención -- validar es trabajo de la herramienta.
-            nombre = texto.split(palabra, 1)[1].strip()
-            return ToolCall(tool_name="abrir_programa_o_web", params={"nombre": nombre})
-
-    if any(palabra in texto for palabra in PALABRAS_CLAVE_CONSULTAR_NOTAS):
-        return ToolCall(tool_name="consultar_notas", params={})
-
-    for palabra in PALABRAS_CLAVE_BORRAR_NOTA:
-        if palabra in texto:
-            numero = texto.split(palabra, 1)[1].strip()
-            return ToolCall(tool_name="borrar_nota", params={"numero": numero})
-
-    for prefijo in PREFIJOS_SOBRESCRIBIR_NOTA:
-        if prefijo in texto:
-            # user_text para conservar mayúsculas/acentos del texto nuevo;
-            # la posición del prefijo es la misma en texto y user_text
-            # porque .lower() no cambia la longitud de estos caracteres.
-            inicio = texto.find(prefijo) + len(prefijo)
-            resto = user_text[inicio:].strip()
-            coincidencia = PATRON_SOBRESCRIBIR_NOTA.match(resto)
-            if coincidencia:
-                numero, texto_nuevo = coincidencia.groups()
-                return ToolCall(
-                    tool_name="sobrescribir_nota",
-                    params={"numero": numero, "texto_nuevo": texto_nuevo},
-                )
-
-    for palabra in PALABRAS_CLAVE_BUSCAR_ARCHIVO:
-        if palabra in texto:
-            nombre = texto.split(palabra, 1)[1].strip()
-            return ToolCall(tool_name="buscar_archivos", params={"nombre": nombre})
-
-    if any(palabra in texto for palabra in PALABRAS_CLAVE_PREGUNTA):
-        return ToolCall(tool_name="responder_pregunta", params={"pregunta": user_text})
-
-    for prefijo in PREFIJOS_CREAR_NOTA:
-        if texto.startswith(prefijo):
-            # user_text (no texto) para conservar mayúsculas/acentos originales
-            # de la nota -- texto solo sirve para hacer el match en minúsculas.
-            texto_nota = user_text[len(prefijo):].strip()
-            return ToolCall(tool_name="crear_nota", params={"texto": texto_nota})
-
-    return None
+    prompt = PROMPT_BASE.format(
+        herramientas=_describir_herramientas(), instruccion=user_text
+    )
+    respuesta = llm_client.generar(prompt)
+    return _parsear_respuesta_llm(respuesta)
