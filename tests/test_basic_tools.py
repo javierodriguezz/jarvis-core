@@ -140,3 +140,40 @@ def test_buscar_archivos_texto_vacio_no_busca():
     resultado = basic_tools.buscar_archivos("   ")
 
     assert "dime qué archivo" in resultado.lower()
+
+
+def test_responder_pregunta_predefinida_nombre():
+    resultado = basic_tools.responder_pregunta("¿cómo te llamas?")
+
+    assert resultado == "Me llamo Jarvis."
+
+
+def test_responder_pregunta_predefinida_creador():
+    resultado = basic_tools.responder_pregunta("¿quién te hizo?")
+
+    assert "Javier" in resultado
+
+
+def test_responder_pregunta_calculo_simple():
+    resultado = basic_tools.responder_pregunta("cuánto es 2 + 2")
+
+    assert resultado == "El resultado es 4."
+
+
+def test_responder_pregunta_calculo_con_decimales():
+    resultado = basic_tools.responder_pregunta("cuánto es 10 / 4")
+
+    assert resultado == "El resultado es 2.5."
+
+
+def test_responder_pregunta_no_reconocida():
+    resultado = basic_tools.responder_pregunta("cuéntame un chiste")
+
+    assert "no sé responder" in resultado.lower()
+
+
+def test_responder_pregunta_no_ejecuta_codigo_arbitrario():
+    # __import__('os') no es aritmética -- debe rechazarse, nunca ejecutarse.
+    resultado = basic_tools.responder_pregunta("cuánto es __import__('os')")
+
+    assert "no sé responder" in resultado.lower()

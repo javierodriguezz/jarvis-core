@@ -73,3 +73,19 @@ def test_reconoce_buscar_archivo():
     assert resultado == ToolCall(
         tool_name="buscar_archivos", params={"nombre": "reporte"}
     )
+
+
+def test_reconoce_pregunta_predefinida():
+    resultado = interpret("¿Cómo te llamas?")
+
+    assert resultado == ToolCall(
+        tool_name="responder_pregunta", params={"pregunta": "¿Cómo te llamas?"}
+    )
+
+
+def test_reconoce_pregunta_de_calculo():
+    resultado = interpret("cuánto es 2 + 2")
+
+    assert resultado == ToolCall(
+        tool_name="responder_pregunta", params={"pregunta": "cuánto es 2 + 2"}
+    )

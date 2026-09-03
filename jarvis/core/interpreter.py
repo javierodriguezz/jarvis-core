@@ -32,6 +32,18 @@ PALABRAS_CLAVE_BUSCAR_ARCHIVO = (
     "buscar archivo ",
     "encuentra archivo ",
 )
+PALABRAS_CLAVE_PREGUNTA = (
+    "cómo te llamas",
+    "como te llamas",
+    "quién te hizo",
+    "quien te hizo",
+    "qué puedes hacer",
+    "que puedes hacer",
+    "cuánto es",
+    "cuanto es",
+    "cuánto son",
+    "cuanto son",
+)
 # Prefijos más específicos primero, para no dejar un "que" colgando en el
 # texto de la nota (ej. "anota que hoy es viernes" -> "hoy es viernes").
 PREFIJOS_CREAR_NOTA = ("anota que ", "apunta que ", "anota ", "apunta ")
@@ -62,6 +74,9 @@ def interpret(user_text: str) -> ToolCall | None:
         if palabra in texto:
             nombre = texto.split(palabra, 1)[1].strip()
             return ToolCall(tool_name="buscar_archivos", params={"nombre": nombre})
+
+    if any(palabra in texto for palabra in PALABRAS_CLAVE_PREGUNTA):
+        return ToolCall(tool_name="responder_pregunta", params={"pregunta": user_text})
 
     for prefijo in PREFIJOS_CREAR_NOTA:
         if texto.startswith(prefijo):

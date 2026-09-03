@@ -9,6 +9,9 @@ Cada función aquí debe:
 Se implementan una por una, empezando por la más simple (hora y fecha).
 """
 
+import ast
+import operator
+import re
 import subprocess
 import webbrowser
 from datetime import datetime
@@ -18,6 +21,36 @@ import config
 from jarvis.memory import notes_store
 
 LIMITE_RESULTADOS_BUSQUEDA = 10
+
+# Preguntas fijas que Jarvis sabe responder sin cálculo. Duplicamos las
+# variantes con y sin acento (igual que en interpreter.py) porque todavía no
+# normalizamos acentos en ningún lado del proyecto.
+RESPUESTAS_PREDEFINIDAS = {
+    "cómo te llamas": "Me llamo Jarvis.",
+    "como te llamas": "Me llamo Jarvis.",
+    "quién te hizo": "Me construyó Javier, programando en Python.",
+    "quien te hizo": "Me construyó Javier, programando en Python.",
+    "qué puedes hacer": (
+        "Puedo decirte la hora, abrir programas o páginas web, guardar y "
+        "consultar notas, buscar archivos, y hacer cálculos simples."
+    ),
+    "que puedes hacer": (
+        "Puedo decirte la hora, abrir programas o páginas web, guardar y "
+        "consultar notas, buscar archivos, y hacer cálculos simples."
+    ),
+}
+
+# Únicos operadores que _evaluar_nodo tiene permitido ejecutar. Cualquier
+# nodo del árbol de sintaxis que no esté en este mapa (nombres de variable,
+# llamadas a función, imports, etc.) hace que se rechace la expresión.
+_OPERADORES_PERMITIDOS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
 
 
 def decir_hora() -> str:
@@ -109,3 +142,63 @@ def buscar_archivos(nombre: str) -> str:
         lineas.append(f"No pude revisar (no existen): {', '.join(carpetas_faltantes)}")
 
     return "\n".join(lineas)
+
+
+def _evaluar_nodo(nodo):
+    """Evalúa recursivamente un nodo del árbol de sintaxis de una expresión aritmética.
+
+    Solo entiende números y los operadores de _OPERADORES_PERMITIDOS. Cualquier
+    otro tipo de nodo (nombres de variable, llamadas a función, comparaciones,
+    etc.) levanta ValueError -- así nunca se ejecuta nada que no sea aritmética
+    pura, a diferencia de lo que pasaría con eval() sobre texto libre.
+    """
+    if isinstance(nodo, ast.Constant) and isinstance(nodo.value, (int, float)):
+        return nodo.value
+    if isinstance(nodo, ast.BinOp) and type(nodo.op) in _OPERADORES_PERMITIDOS:
+        return _OPERADORES_PERMITIDOS[type(nodo.op)](
+            _evaluar_nodo(nodo.left), _evaluar_nodo(nodo.right)
+        )
+    if isinstance(nodo, ast.UnaryOp) and type(nodo.op) in _OPERADORES_PERMITIDOS:
+        return _OPERADORES_PERMITIDOS[type(nodo.op)](_evaluar_nodo(nodo.operand))
+    raise ValueError("Expresión no permitida")
+
+
+def _evaluar_expresion_matematica(expresion: str) -> float:
+    """Evalúa una expresión aritmética simple (+ - * /) de forma segura.
+
+    Se parsea el texto a un árbol de sintaxis con ast.parse (mode="eval") y
+    se recorre con _evaluar_nodo, que solo permite números y operadores
+    aritméticos básicos. Levanta ValueError o SyntaxError si la expresión
+    trae algo fuera de eso.
+    """
+    # ast.parse en modo "eval" no tolera espacios iniciales (los interpreta
+    # como indentación inesperada), así que se recortan antes de parsear.
+    arbol = ast.parse(expresion.strip(), mode="eval")
+    return _evaluar_nodo(arbol.body)
+
+
+def responder_pregunta(pregunta: str) -> str:
+    """Responde una pregunta sencilla: predefinida o un cálculo aritmético simple.
+
+    Primero busca coincidencia en RESPUESTAS_PREDEFINIDAS. Si no hay, se
+    queda solo con los dígitos y operadores del texto e intenta evaluarlo
+    como expresión aritmética con _evaluar_expresion_matematica. Si nada de
+    eso aplica, admite que no sabe responder.
+    """
+    texto = pregunta.strip().lower()
+
+    for clave, respuesta in RESPUESTAS_PREDEFINIDAS.items():
+        if clave in texto:
+            return respuesta
+
+    expresion = re.sub(r"[^0-9+\-*/.() ]", "", texto)
+    if expresion.strip():
+        try:
+            resultado = _evaluar_expresion_matematica(expresion)
+            if isinstance(resultado, float) and resultado.is_integer():
+                resultado = int(resultado)
+            return f"El resultado es {resultado}."
+        except (ValueError, SyntaxError, ZeroDivisionError, TypeError):
+            pass
+
+    return "No sé responder eso todavía."

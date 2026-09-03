@@ -39,4 +39,9 @@ TOOLS = {
         "permission": "SAFE",
         "description": "Busca archivos por nombre dentro de las carpetas permitidas.",
     },
+    "responder_pregunta": {
+        "func": basic_tools.responder_pregunta,
+        "permission": "SAFE",
+        "description": "Responde preguntas sencillas predefinidas o cálculos aritméticos simples.",
+    },
 }
