@@ -6,15 +6,32 @@ Ver el plan completo, la arquitectura y el roadmap por fases en [`docs/ROADMAP.m
 
 ## Estado actual
 
-🚧 Fase 0 — esqueleto inicial. Todavía no hay herramientas implementadas.
+Fase 1 completa: asistente de consola con intérprete de reglas simples (palabras clave) y las 5 herramientas iniciales:
 
-## Cómo correrlo (cuando el entorno esté listo)
+- Decir la hora y la fecha.
+- Abrir programas o páginas web (lista blanca en `config.py`).
+- Crear y consultar notas (guardadas en `data/notes.json`).
+- Buscar archivos en carpetas permitidas (`config.ALLOWED_SEARCH_DIRS`).
+- Responder preguntas sencillas: predefinidas o cálculos aritméticos simples.
+
+Siguiente paso: Fase 2 (arquitectura de permisos y confirmaciones formales). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+## Cómo correrlo
 
 ```bash
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
+chcp 65001
 python main.py
+```
+
+`chcp 65001` cambia el codepage de la consola de Windows a UTF-8; sin eso, los acentos pueden mostrarse como caracteres rotos.
+
+## Cómo correr las pruebas
+
+```bash
+pytest
 ```
 
 ## Principios de seguridad

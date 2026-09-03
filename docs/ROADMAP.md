@@ -120,4 +120,6 @@ Inicio automático con el sistema (Task Scheduler de Windows), manejo robusto de
 
 ## 5. Próximo paso inmediato
 
-Cuando quieras, empezamos la Fase 0: activar el entorno virtual, correr el `main.py` de este esqueleto (ahora mismo solo hace *echo*), y hacer el primer commit a Git. Desde ahí construimos, en la Fase 1, la primera herramienta real (hora y fecha) juntos, paso a paso.
+Fase 0 y Fase 1 completas: las 5 herramientas iniciales (hora y fecha, abrir programa o web, crear/consultar notas, buscar archivos, responder preguntas sencillas) están implementadas, registradas en `jarvis/tools/registry.py`, conectadas al intérprete de reglas simples, y cada una tiene al menos una prueba en `tests/`.
+
+Siguiente paso: Fase 2, formalizar el sistema de confirmación antes de acciones delicadas (borrar, modificar, enviar) -- por ahora casi todas las herramientas son `SAFE` porque solo leen o abren cosas de una lista blanca; ninguna borra ni modifica nada todavía.
