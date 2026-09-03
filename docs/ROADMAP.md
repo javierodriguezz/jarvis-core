@@ -120,6 +120,10 @@ Inicio automático con el sistema (Task Scheduler de Windows), manejo robusto de
 
 ## 5. Próximo paso inmediato
 
-Fase 0 y Fase 1 completas: las 5 herramientas iniciales (hora y fecha, abrir programa o web, crear/consultar notas, buscar archivos, responder preguntas sencillas) están implementadas, registradas en `jarvis/tools/registry.py`, conectadas al intérprete de reglas simples, y cada una tiene al menos una prueba en `tests/`.
+Fase 0, Fase 1 y Fase 2 completas.
 
-Siguiente paso: Fase 2, formalizar el sistema de confirmación antes de acciones delicadas (borrar, modificar, enviar) -- por ahora casi todas las herramientas son `SAFE` porque solo leen o abren cosas de una lista blanca; ninguna borra ni modifica nada todavía.
+Fase 1: las 5 herramientas iniciales (hora y fecha, abrir programa o web, crear/consultar notas, buscar archivos, responder preguntas sencillas) están implementadas, registradas en `jarvis/tools/registry.py`, conectadas al intérprete de reglas simples, y cada una tiene al menos una prueba en `tests/`.
+
+Fase 2: el sistema de confirmación de `jarvis/core/executor.py` (permiso `CONFIRM`, pide s/n antes de ejecutar) ya se ejercita con dos acciones destructivas reales -- `borrar_nota` y `sobrescribir_nota` -- además de las pruebas de punta a punta que confirman el flujo completo (texto del usuario -> intérprete -> confirmación -> acción) en `tests/test_executor.py`.
+
+Siguiente paso: Fase 3, conectar un modelo de lenguaje local con Ollama. `interpreter.py` cambia de reglas fijas a usar el LLM para decidir qué herramienta llamar, pero `executor.py` sigue validando y pidiendo confirmación igual que ahora -- el LLM decide, nunca ejecuta directo.

@@ -6,7 +6,9 @@ Ver el plan completo, la arquitectura y el roadmap por fases en [`docs/ROADMAP.m
 
 ## Estado actual
 
-Fase 1 completa: asistente de consola con intérprete de reglas simples (palabras clave) y las 5 herramientas iniciales:
+Fase 1 y Fase 2 completas: asistente de consola con intérprete de reglas simples (palabras clave), las 5 herramientas iniciales y confirmación antes de acciones destructivas.
+
+Herramientas `SAFE` (se ejecutan sin preguntar):
 
 - Decir la hora y la fecha.
 - Abrir programas o páginas web (lista blanca en `config.py`).
@@ -14,7 +16,12 @@ Fase 1 completa: asistente de consola con intérprete de reglas simples (palabra
 - Buscar archivos en carpetas permitidas (`config.ALLOWED_SEARCH_DIRS`).
 - Responder preguntas sencillas: predefinidas o cálculos aritméticos simples.
 
-Siguiente paso: Fase 2 (arquitectura de permisos y confirmaciones formales). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Herramientas `CONFIRM` (piden confirmación s/n antes de ejecutarse):
+
+- Borrar una nota guardada.
+- Sobrescribir el texto de una nota existente.
+
+Siguiente paso: Fase 3 (conectar un modelo de lenguaje local con Ollama). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Cómo correrlo
 
