@@ -5,7 +5,7 @@ Pruebas del ejecutor (jarvis/core/executor.py).
 from jarvis.core import interpreter
 from jarvis.core.executor import execute
 from jarvis.core.interpreter import ToolCall
-from jarvis.memory import notes_store
+from jarvis.memory import db, notes_store
 from jarvis.tools import registry
 
 
@@ -66,7 +66,7 @@ def _responder_con(monkeypatch, texto: str):
 
 
 def test_flujo_completo_borrar_nota_cancelada_no_borra(tmp_path, monkeypatch):
-    monkeypatch.setattr(notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(db, "DB_FILE", tmp_path / "jarvis.db")
     notes_store.add_note("comprar pan")
     monkeypatch.setattr("builtins.input", lambda _: "n")
     _responder_con(monkeypatch, '{"tool_name": "borrar_nota", "params": {"numero": "1"}}')
@@ -79,7 +79,7 @@ def test_flujo_completo_borrar_nota_cancelada_no_borra(tmp_path, monkeypatch):
 
 
 def test_flujo_completo_borrar_nota_confirmada_borra(tmp_path, monkeypatch):
-    monkeypatch.setattr(notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(db, "DB_FILE", tmp_path / "jarvis.db")
     notes_store.add_note("comprar pan")
     monkeypatch.setattr("builtins.input", lambda _: "s")
     _responder_con(monkeypatch, '{"tool_name": "borrar_nota", "params": {"numero": "1"}}')
@@ -92,7 +92,7 @@ def test_flujo_completo_borrar_nota_confirmada_borra(tmp_path, monkeypatch):
 
 
 def test_flujo_completo_sobrescribir_nota_confirmada_actualiza(tmp_path, monkeypatch):
-    monkeypatch.setattr(notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(db, "DB_FILE", tmp_path / "jarvis.db")
     notes_store.add_note("comprar pan")
     monkeypatch.setattr("builtins.input", lambda _: "s")
     _responder_con(

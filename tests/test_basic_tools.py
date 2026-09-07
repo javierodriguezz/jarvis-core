@@ -68,7 +68,7 @@ def test_abrir_algo_no_permitido_no_ejecuta_nada(monkeypatch):
 
 
 def test_crear_nota_guarda_y_confirma(tmp_path, monkeypatch):
-    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(basic_tools.notes_store.db, "DB_FILE", tmp_path / "jarvis.db")
 
     resultado = basic_tools.crear_nota("comprar pan")
 
@@ -77,7 +77,7 @@ def test_crear_nota_guarda_y_confirma(tmp_path, monkeypatch):
 
 
 def test_crear_nota_vacia_no_guarda_nada(tmp_path, monkeypatch):
-    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(basic_tools.notes_store.db, "DB_FILE", tmp_path / "jarvis.db")
 
     resultado = basic_tools.crear_nota("   ")
 
@@ -86,7 +86,7 @@ def test_crear_nota_vacia_no_guarda_nada(tmp_path, monkeypatch):
 
 
 def test_consultar_notas_sin_notas(tmp_path, monkeypatch):
-    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(basic_tools.notes_store.db, "DB_FILE", tmp_path / "jarvis.db")
 
     resultado = basic_tools.consultar_notas()
 
@@ -94,7 +94,7 @@ def test_consultar_notas_sin_notas(tmp_path, monkeypatch):
 
 
 def test_consultar_notas_con_notas(tmp_path, monkeypatch):
-    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(basic_tools.notes_store.db, "DB_FILE", tmp_path / "jarvis.db")
     basic_tools.crear_nota("primera")
     basic_tools.crear_nota("segunda")
 
@@ -105,7 +105,7 @@ def test_consultar_notas_con_notas(tmp_path, monkeypatch):
 
 
 def test_borrar_nota_valida(tmp_path, monkeypatch):
-    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(basic_tools.notes_store.db, "DB_FILE", tmp_path / "jarvis.db")
     basic_tools.crear_nota("comprar pan")
 
     resultado = basic_tools.borrar_nota("1")
@@ -115,7 +115,7 @@ def test_borrar_nota_valida(tmp_path, monkeypatch):
 
 
 def test_borrar_nota_numero_inexistente(tmp_path, monkeypatch):
-    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(basic_tools.notes_store.db, "DB_FILE", tmp_path / "jarvis.db")
 
     resultado = basic_tools.borrar_nota("5")
 
@@ -134,7 +134,7 @@ def test_borrar_nota_numero_invalido_no_llama_notes_store(monkeypatch):
 
 
 def test_sobrescribir_nota_valida(tmp_path, monkeypatch):
-    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(basic_tools.notes_store.db, "DB_FILE", tmp_path / "jarvis.db")
     basic_tools.crear_nota("comprar pan")
 
     resultado = basic_tools.sobrescribir_nota("1", "comprar leche")
@@ -144,7 +144,7 @@ def test_sobrescribir_nota_valida(tmp_path, monkeypatch):
 
 
 def test_sobrescribir_nota_numero_inexistente(tmp_path, monkeypatch):
-    monkeypatch.setattr(basic_tools.notes_store, "NOTES_FILE", tmp_path / "notes.json")
+    monkeypatch.setattr(basic_tools.notes_store.db, "DB_FILE", tmp_path / "jarvis.db")
 
     resultado = basic_tools.sobrescribir_nota("5", "texto nuevo")
 

@@ -82,7 +82,7 @@ def abrir_programa_o_web(nombre: str) -> str:
 
 
 def crear_nota(texto: str) -> str:
-    """Guarda una nota nueva en el almacenamiento de notas (data/notes.json)."""
+    """Guarda una nota nueva en el almacenamiento de notas (data/jarvis.db)."""
     texto = texto.strip()
     if not texto:
         return "No puedo guardar una nota vacía."
@@ -92,12 +92,19 @@ def crear_nota(texto: str) -> str:
 
 
 def consultar_notas() -> str:
-    """Devuelve todas las notas guardadas como una lista numerada legible."""
+    """Devuelve todas las notas guardadas como una lista numerada legible.
+
+    El número al inicio de cada línea es la posición visible (la que se usa
+    con borrar_nota/sobrescribir_nota); el id interno se muestra aparte.
+    """
     notas = notes_store.list_notes()
     if not notas:
         return "No tienes notas guardadas."
 
-    lineas = [f"{i}. {nota['texto']}" for i, nota in enumerate(notas, start=1)]
+    lineas = [
+        f"{i}. {nota['texto']} (id interno: {nota['id']})"
+        for i, nota in enumerate(notas, start=1)
+    ]
     return "\n".join(lineas)
 
 
