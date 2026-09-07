@@ -25,7 +25,7 @@ def get_connection() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    """Crea la tabla 'notas' si todavia no existe.
+    """Crea las tablas del proyecto si todavia no existen ('notas', 'historial').
 
     Es seguro llamar esta funcion varias veces (por ejemplo, una vez por
     cada arranque de main.py): CREATE TABLE IF NOT EXISTS no hace nada si
@@ -39,6 +39,16 @@ def init_db() -> None:
             texto TEXT NOT NULL,
             creada TEXT NOT NULL,
             editada TEXT
+        )
+        """
+    )
+    conexion.execute(
+        """
+        CREATE TABLE IF NOT EXISTS historial (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            texto_usuario TEXT NOT NULL,
+            respuesta TEXT NOT NULL,
+            fecha TEXT NOT NULL
         )
         """
     )

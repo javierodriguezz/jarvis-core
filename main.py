@@ -11,6 +11,7 @@ que necesita que el servicio de Ollama esté corriendo en la máquina.
 import requests
 
 from jarvis.core import executor, interpreter
+from jarvis.memory import historial_store
 
 
 def main():
@@ -26,14 +27,20 @@ def main():
         try:
             tool_call = interpreter.interpret(texto)
         except requests.RequestException:
-            print("No pude conectar con Ollama. ¿Está corriendo el servicio?")
+            respuesta = "No pude conectar con Ollama. ¿Está corriendo el servicio?"
+            print(respuesta)
+            historial_store.agregar_turno(texto, respuesta)
             continue
 
         if tool_call is None:
-            print("No entendí esa instrucción.")
+            respuesta = "No entendí esa instrucción."
+            print(respuesta)
+            historial_store.agregar_turno(texto, respuesta)
             continue
 
-        print(executor.execute(tool_call))
+        respuesta = executor.execute(tool_call)
+        print(respuesta)
+        historial_store.agregar_turno(texto, respuesta)
 
 
 if __name__ == "__main__":
