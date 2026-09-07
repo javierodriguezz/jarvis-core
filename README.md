@@ -6,13 +6,13 @@ Ver el plan completo, la arquitectura y el roadmap por fases en [`docs/ROADMAP.m
 
 ## Estado actual
 
-Fase 1, Fase 2 y Fase 3 completas: asistente de consola cuyo intérprete usa un modelo de lenguaje local (Ollama + `llama3.2`) para decidir qué herramienta llamar, las 5 herramientas iniciales, y confirmación antes de acciones destructivas.
+Fase 1, Fase 2, Fase 3 y Fase 4 completas: asistente de consola cuyo intérprete usa un modelo de lenguaje local (Ollama + `llama3.2`) para decidir qué herramienta llamar, las 5 herramientas iniciales, confirmación antes de acciones destructivas, y memoria persistente en SQLite (`data/jarvis.db`).
 
 Herramientas `SAFE` (se ejecutan sin preguntar):
 
 - Decir la hora y la fecha.
 - Abrir programas o páginas web (lista blanca en `config.py`).
-- Crear y consultar notas (guardadas en `data/notes.json`).
+- Crear y consultar notas (guardadas en SQLite, tabla `notas`).
 - Buscar archivos en carpetas permitidas (`config.ALLOWED_SEARCH_DIRS`).
 - Responder preguntas sencillas: predefinidas o cálculos aritméticos simples.
 
@@ -21,7 +21,9 @@ Herramientas `CONFIRM` (piden confirmación s/n antes de ejecutarse):
 - Borrar una nota guardada.
 - Sobrescribir el texto de una nota existente.
 
-Siguiente paso: Fase 4 (memoria persistente con SQLite). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Cada turno de la conversación (incluyendo "no entendí" o errores de conexión con Ollama) queda guardado en la tabla `historial` de SQLite. La tabla de preferencias del usuario, contemplada en la Fase 4 original, se dejó pendiente hasta que exista una herramienta real que la necesite.
+
+Siguiente paso: Fase 5 (entrada de voz). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Cómo correrlo
 
