@@ -40,6 +40,17 @@ RESPUESTAS_PREDEFINIDAS = {
     ),
 }
 
+# Palabras que se traducen a su símbolo antes de intentar evaluar una
+# expresión -- necesario sobre todo para entrada por voz, donde el usuario
+# dice "más" o "por" en vez de escribir "+" o "*".
+_PALABRAS_A_OPERADOR = {
+    "más": "+",
+    "mas": "+",
+    "menos": "-",
+    "por": "*",
+    "entre": "/",
+}
+
 # Únicos operadores que _evaluar_nodo tiene permitido ejecutar. Cualquier
 # nodo del árbol de sintaxis que no esté en este mapa (nombres de variable,
 # llamadas a función, imports, etc.) hace que se rechace la expresión.
@@ -226,10 +237,11 @@ def _evaluar_expresion_matematica(expresion: str) -> float:
 def responder_pregunta(pregunta: str) -> str:
     """Responde una pregunta sencilla: predefinida o un cálculo aritmético simple.
 
-    Primero busca coincidencia en RESPUESTAS_PREDEFINIDAS. Si no hay, se
-    queda solo con los dígitos y operadores del texto e intenta evaluarlo
-    como expresión aritmética con _evaluar_expresion_matematica. Si nada de
-    eso aplica, admite que no sabe responder.
+    Primero busca coincidencia en RESPUESTAS_PREDEFINIDAS. Si no hay, traduce
+    palabras como "más" o "por" a su símbolo (_PALABRAS_A_OPERADOR), se queda
+    solo con los dígitos y operadores del texto, e intenta evaluarlo como
+    expresión aritmética con _evaluar_expresion_matematica. Si nada de eso
+    aplica, admite que no sabe responder.
     """
     texto = pregunta.strip().lower()
 
@@ -237,7 +249,11 @@ def responder_pregunta(pregunta: str) -> str:
         if clave in texto:
             return respuesta
 
-    expresion = re.sub(r"[^0-9+\-*/.() ]", "", texto)
+    texto_para_expresion = texto
+    for palabra, simbolo in _PALABRAS_A_OPERADOR.items():
+        texto_para_expresion = re.sub(rf"\b{palabra}\b", simbolo, texto_para_expresion)
+
+    expresion = re.sub(r"[^0-9+\-*/.() ]", "", texto_para_expresion)
     if expresion.strip():
         try:
             resultado = _evaluar_expresion_matematica(expresion)

@@ -235,6 +235,27 @@ def test_responder_pregunta_calculo_con_decimales():
     assert resultado == "El resultado es 2.5."
 
 
+def test_responder_pregunta_operador_en_palabra_mas():
+    # Entrada típica de voz: se dice "más", no "+".
+    resultado = basic_tools.responder_pregunta("cuánto es 5 más 5")
+
+    assert resultado == "El resultado es 10."
+
+
+def test_responder_pregunta_operador_en_palabra_por():
+    resultado = basic_tools.responder_pregunta("cuánto es 4 por 2")
+
+    assert resultado == "El resultado es 8."
+
+
+def test_responder_pregunta_operador_en_palabra_no_afecta_otras_palabras():
+    # "por" dentro de "porque" no debe convertirse en "*" -- si lo hiciera,
+    # esto se evaluaría como "5 * 3" (15) en vez de quedar sin operador.
+    resultado = basic_tools.responder_pregunta("cuánto es 5 porque 3")
+
+    assert "no sé responder" in resultado.lower()
+
+
 def test_responder_pregunta_no_reconocida():
     resultado = basic_tools.responder_pregunta("cuéntame un chiste")
 
