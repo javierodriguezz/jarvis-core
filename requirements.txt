@@ -5,3 +5,7 @@ pytest
 
 # Fase 3: cliente HTTP para hablar con el servicio local de Ollama.
 requests
+
+# Fase 5: entrada de voz -- captura de microfono y transcripcion a texto.
+sounddevice
+faster-whisper

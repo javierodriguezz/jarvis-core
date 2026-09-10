@@ -45,3 +45,11 @@ SITIOS_PERMITIDOS = {
 # definido ahí, se usa el valor por defecto de la derecha.
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+
+# Fase 5: entrada de voz. WHISPER_MODEL es el tamaño del modelo de faster-whisper
+# ("tiny", "base", "small", ...) -- a mayor tamaño, más preciso y más lento.
+# "base" es el punto medio razonable para correr en CPU. AUDIO_SAMPLE_RATE es
+# la frecuencia de muestreo (muestras por segundo) con la que se graba del
+# micrófono; 16000 Hz es lo que espera Whisper, no hace falta más.
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
+AUDIO_SAMPLE_RATE = 16000

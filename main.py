@@ -6,21 +6,35 @@ a una ToolCall, y jarvis.core.executor la valida y ejecuta.
 
 Desde la Fase 3, interpreter.interpret() usa un modelo local vía Ollama, así
 que necesita que el servicio de Ollama esté corriendo en la máquina.
+
+Desde la Fase 5, escribir "voz" en vez de una instrucción graba del
+micrófono y transcribe con Whisper -- el texto resultante entra al mismo
+interpreter.interpret() de siempre, como si se hubiera escrito a mano.
 """
 
 import requests
 
+from jarvis.audio import grabador, transcriptor
 from jarvis.core import executor, interpreter
 from jarvis.memory import historial_store
 
 
 def main():
-    print("Jarvis (v0.1) -- escribe 'salir' para terminar.")
+    print("Jarvis (v0.1) -- escribe 'salir' para terminar, 'voz' para hablar.")
     while True:
         texto = input("> ").strip()
         if texto.lower() in ("salir", "exit", "quit"):
             print("Hasta luego.")
             break
+
+        if texto.lower() == "voz":
+            audio = grabador.grabar_audio()
+            texto = transcriptor.transcribir(audio)
+            if not texto:
+                print("No escuché nada.")
+                continue
+            print(f"Escuché: {texto}")
+
         if not texto:
             continue
 
