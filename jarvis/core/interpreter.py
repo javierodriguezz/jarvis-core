@@ -47,6 +47,9 @@ Respuesta: {{"tool_name": "decir_hora", "params": {{}}}}
 Instrucción: "abre youtube"
 Respuesta: {{"tool_name": "abrir_programa_o_web", "params": {{"nombre": "youtube"}}}}
 
+Instrucción: "abre la calculadora"
+Respuesta: {{"tool_name": "abrir_programa_o_web", "params": {{"nombre": "calculadora"}}}}
+
 Instrucción: "anota que hoy es viernes"
 Respuesta: {{"tool_name": "crear_nota", "params": {{"texto": "hoy es viernes"}}}}
 

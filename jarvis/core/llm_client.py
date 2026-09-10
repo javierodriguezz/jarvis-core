@@ -27,6 +27,10 @@ def generar(prompt: str) -> str:
             "model": config.OLLAMA_MODEL,
             "prompt": prompt,
             "stream": False,
+            # temperature 0: sin muestreo aleatorio, siempre la respuesta mas
+            # probable. Para elegir herramienta y parametros queremos que sea
+            # lo mas deterministico posible, no creativo.
+            "options": {"temperature": 0},
         },
         timeout=60,
     )

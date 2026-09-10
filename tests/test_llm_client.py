@@ -46,6 +46,7 @@ def test_generar_manda_el_prompt_correcto(monkeypatch):
         "model": config.OLLAMA_MODEL,
         "prompt": "di hola",
         "stream": False,
+        "options": {"temperature": 0},
     }
 
 
