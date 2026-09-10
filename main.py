@@ -40,8 +40,18 @@ def main():
 
         try:
             tool_call = interpreter.interpret(texto)
-        except requests.RequestException:
+        except requests.ConnectionError:
             respuesta = "No pude conectar con Ollama. ¿Está corriendo el servicio?"
+            print(respuesta)
+            historial_store.agregar_turno(texto, respuesta)
+            continue
+        except requests.HTTPError as error:
+            respuesta = f"Ollama respondió con un error: {error}"
+            print(respuesta)
+            historial_store.agregar_turno(texto, respuesta)
+            continue
+        except requests.RequestException as error:
+            respuesta = f"Error hablando con Ollama: {error}"
             print(respuesta)
             historial_store.agregar_turno(texto, respuesta)
             continue

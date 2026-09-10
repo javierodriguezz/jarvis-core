@@ -44,7 +44,7 @@ SITIOS_PERMITIDOS = {
 # valores se pueden sobreescribir en .env (ver .env.example); si no está
 # definido ahí, se usa el valor por defecto de la derecha.
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 
 # Fase 5: entrada de voz. WHISPER_MODEL es el tamaño del modelo de faster-whisper
 # ("tiny", "base", "small", ...) -- a mayor tamaño, más preciso y más lento.
