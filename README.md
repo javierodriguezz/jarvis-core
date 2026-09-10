@@ -6,7 +6,7 @@ Ver el plan completo, la arquitectura y el roadmap por fases en [`docs/ROADMAP.m
 
 ## Estado actual
 
-Fase 1, Fase 2, Fase 3 y Fase 4 completas: asistente de consola cuyo intérprete usa un modelo de lenguaje local (Ollama + `llama3.2`) para decidir qué herramienta llamar, las 5 herramientas iniciales, confirmación antes de acciones destructivas, y memoria persistente en SQLite (`data/jarvis.db`).
+Fase 1 a Fase 5 completas: asistente de consola cuyo intérprete usa un modelo de lenguaje local (Ollama + `llama3.2`) para decidir qué herramienta llamar, las 5 herramientas iniciales, confirmación antes de acciones destructivas, memoria persistente en SQLite (`data/jarvis.db`), y entrada de voz (comando `voz`: graba del micrófono y transcribe con `faster-whisper` antes de mandarlo al mismo intérprete).
 
 Herramientas `SAFE` (se ejecutan sin preguntar):
 
@@ -23,11 +23,11 @@ Herramientas `CONFIRM` (piden confirmación s/n antes de ejecutarse):
 
 Cada turno de la conversación (incluyendo "no entendí" o errores de conexión con Ollama) queda guardado en la tabla `historial` de SQLite. La tabla de preferencias del usuario, contemplada en la Fase 4 original, se dejó pendiente hasta que exista una herramienta real que la necesite.
 
-Siguiente paso: Fase 5 (entrada de voz). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Siguiente paso: Fase 6 (salida de voz, con Piper). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Cómo correrlo
 
-Requiere [Ollama](https://ollama.com) instalado y corriendo, con el modelo `llama3.2` descargado (`ollama pull llama3.2`).
+Requiere [Ollama](https://ollama.com) instalado y corriendo, con el modelo `llama3.2` descargado (`ollama pull llama3.2`), y un micrófono conectado si vas a usar el comando `voz`.
 
 ```bash
 python -m venv venv
@@ -38,6 +38,8 @@ python main.py
 ```
 
 `chcp 65001` cambia el codepage de la consola de Windows a UTF-8; sin eso, los acentos pueden mostrarse como caracteres rotos.
+
+Escribe `voz` en vez de una instrucción para grabar unos segundos del micrófono y transcribirlos con Whisper (modelo local, sin mandar audio a ningún servicio externo); el texto transcrito entra al mismo intérprete que si lo hubieras escrito a mano. La primera vez que se usa, `faster-whisper` descarga el modelo configurado en `WHISPER_MODEL` (`.env`, por defecto `base`) y lo deja cacheado en disco.
 
 ## Cómo correr las pruebas
 

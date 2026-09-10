@@ -120,7 +120,7 @@ Inicio automático con el sistema (Task Scheduler de Windows), manejo robusto de
 
 ## 5. Próximo paso inmediato
 
-Fase 0, Fase 1, Fase 2 y Fase 3 completas.
+Fase 0 a Fase 5 completas.
 
 Fase 1: las 5 herramientas iniciales (hora y fecha, abrir programa o web, crear/consultar notas, buscar archivos, responder preguntas sencillas) están implementadas, registradas en `jarvis/tools/registry.py`, y cada una tiene al menos una prueba en `tests/`.
 
@@ -132,4 +132,15 @@ Fase 4: se creó `jarvis/memory/db.py` (conexión a `data/jarvis.db` vía `sqlit
 
 La tabla de preferencias del usuario, contemplada originalmente en esta fase, se dejó pendiente a propósito: todavía no existe ninguna herramienta que necesite leer o guardar una preferencia, y se decidió no diseñar ese esquema hasta que haya una razón concreta que lo pida.
 
-Siguiente paso: Fase 5, entrada de voz con whisper.cpp (o `faster-whisper` como alternativa).
+Fase 5: entrada de voz con `faster-whisper` (se eligió sobre whisper.cpp para no depender de compilar nada en Windows -- se instala con `pip install` y ya, vía ruedas precompiladas). Se agregó `jarvis/audio/`:
+
+- `grabador.py`: `grabar_audio()` captura del micrófono por defecto con `sounddevice`, con una cuenta regresiva de 3 segundos impresa antes de empezar (sin eso, se perdía el inicio de lo que decía el usuario -- se detectó probando a mano). Regresa un arreglo de una dimensión en punto flotante a `config.AUDIO_SAMPLE_RATE` (16000 Hz, lo que espera Whisper).
+- `transcriptor.py`: `transcribir()` envuelve `faster_whisper.WhisperModel`, cacheando el modelo cargado en una variable de módulo (`_modelo`) para no releerlo del disco en cada llamada -- cargarlo tarda unos segundos. El tamaño de modelo es configurable vía `config.WHISPER_MODEL` (`.env`, por defecto `"base"`: mejor precisión que `"tiny"` corriendo en CPU, sin llegar a ser lento).
+
+`main.py` reconoce el comando `voz`: graba, transcribe, e inyecta el texto resultante al mismo `interpreter.interpret()` de siempre -- no se duplicó ninguna lógica de interpretación/ejecución/historial, solo se agregó una fuente de entrada alternativa a `input()`.
+
+De paso se encontró y corrigió un bug de la Fase 3, no relacionado con la voz en sí: `config.OLLAMA_MODEL` tenía por defecto `"llama3.2:3b"`, un tag que no coincidía con el modelo realmente descargado (`llama3.2:latest`), así que cualquier instrucción devolvía un 404 de Ollama. `main.py` además atrapaba cualquier `requests.RequestException` bajo el mismo mensaje "No pude conectar con Ollama", escondiendo que en realidad sí había conexión pero el modelo no existía. Se corrigió el default a `"llama3.2"` y se separaron los mensajes: error de conexión real (`ConnectionError`) vs. respuesta de error HTTP (`HTTPError`, ej. modelo no encontrado) vs. cualquier otro error de la petición.
+
+Pruebas (`tests/test_grabador.py`, `tests/test_transcriptor.py`): igual que con Ollama, nunca se toca hardware ni modelo real -- se reemplazan `sounddevice.rec`/`wait` y `WhisperModel` por versiones falsas.
+
+Siguiente paso: Fase 6, salida de voz con Piper.
