@@ -78,3 +78,22 @@ def test_responder_pregunta_registrada_y_con_forma_correcta():
     assert callable(entrada["func"])
     assert entrada["permission"] in PERMISOS_VALIDOS
     assert isinstance(entrada["description"], str) and entrada["description"]
+
+
+def test_preguntar_ia_registrada():
+    assert "preguntar_ia" in TOOLS
+
+
+def test_preguntar_ia_tiene_forma_correcta():
+    entrada = TOOLS["preguntar_ia"]
+
+    assert callable(entrada["func"])
+    assert entrada["permission"] in PERMISOS_VALIDOS
+    assert isinstance(entrada["description"], str) and entrada["description"]
+
+
+def test_preguntar_ia_es_safe():
+    # No modifica ni borra nada, así que no pide confirmación. Lo que sí hace,
+    # y ninguna otra herramienta hace, es mandar texto del usuario a un
+    # servicio externo -- por eso su description lo dice explícitamente.
+    assert TOOLS["preguntar_ia"]["permission"] == "SAFE"

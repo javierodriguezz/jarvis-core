@@ -11,7 +11,7 @@ Nada que no esté en TOOLS puede ejecutarse. Este archivo es, a propósito,
 el único lugar donde se decide qué puede hacer el asistente en el sistema.
 """
 
-from jarvis.tools import basic_tools
+from jarvis.tools import basic_tools, ia_tools
 
 TOOLS = {
     "decir_hora": {
@@ -53,5 +53,14 @@ TOOLS = {
         "func": basic_tools.responder_pregunta,
         "permission": "SAFE",
         "description": "Responde preguntas sencillas predefinidas o cálculos aritméticos simples.",
+    },
+    "preguntar_ia": {
+        "func": ia_tools.preguntar_ia,
+        "permission": "SAFE",
+        "description": (
+            "Responde preguntas abiertas o de conocimiento general usando una IA en la nube. "
+            "Es la única herramienta que manda texto fuera de la máquina. "
+            "No usarla para la hora, notas, abrir programas ni cálculos aritméticos."
+        ),
     },
 }
