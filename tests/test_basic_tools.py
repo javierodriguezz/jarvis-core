@@ -21,11 +21,12 @@ def test_decir_hora_formato():
 
 
 def test_decir_hora_incluye_fecha_de_hoy():
-    hoy = datetime.now().strftime("%d/%m/%Y")
+    hoy = datetime.now()
+    fecha_esperada = f"{hoy.day} de {basic_tools._MESES[hoy.month - 1]} de {hoy.year}"
 
     resultado = basic_tools.decir_hora()
 
-    assert hoy in resultado
+    assert fecha_esperada in resultado
 
 
 def test_abrir_programa_permitido_llama_popen(monkeypatch):

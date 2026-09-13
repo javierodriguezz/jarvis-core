@@ -64,10 +64,23 @@ _OPERADORES_PERMITIDOS = {
 }
 
 
+_MESES = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+]
+
+
 def decir_hora() -> str:
-    """Devuelve la fecha y hora actuales del sistema en formato legible."""
+    """Devuelve la fecha y hora actuales del sistema en formato legible.
+
+    La fecha se escribe con el nombre del mes ("12 de septiembre de 2026")
+    en vez de números separados por diagonales -- así también se lee bien
+    en voz alta, no solo en pantalla (Fase 6, salida de voz).
+    """
     ahora = datetime.now()
-    return ahora.strftime("Son las %H:%M del %d/%m/%Y")
+    mes = _MESES[ahora.month - 1]
+    fecha = f"{ahora.day} de {mes} de {ahora.year}"
+    return f"Son las {ahora.strftime('%H:%M')} del {fecha}"
 
 
 def abrir_programa_o_web(nombre: str) -> str:
