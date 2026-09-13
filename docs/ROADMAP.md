@@ -105,6 +105,9 @@ Reconocimiento de voz con whisper.cpp (o `faster-whisper` como alternativa más 
 ### Fase 6 — Salida de voz (semanas 16-17)
 Síntesis de voz con Piper. El asistente empieza a "hablar" sus respuestas en vez de solo imprimirlas.
 
+### Fase 6.5 — Conexión a IA en la nube (semana 17)
+Fase agregada sobre la marcha, fuera del plan original. Hasta aquí, Jarvis solo sabía responder preguntas predefinidas o cálculos aritméticos: el LLM local (Fase 3) se usa para elegir herramienta, no para conversar. Se conecta la API de Gemini como una herramienta más del registro, de modo que las preguntas abiertas tengan una respuesta real en vez de un "no entendí". El resto del proyecto sigue siendo local; esta es la única pieza que sale a internet.
+
 ### Fase 7 — Palabra de activación (semanas 18-19)
 openWakeWord para detectar "Jarvis" y activar la escucha, en vez de tener que ejecutar el programa manualmente cada vez.
 
@@ -152,5 +155,21 @@ La voz se eligió probando varias en voz alta con la misma frase de prueba: se d
 De paso se encontró un problema, no arquitectónico sino de contenido: `decir_hora()` (Fase 1) devolvía la fecha como `"12/09/2026"`, que Piper leía literalmente ("doce barra cero nueve barra dos mil veintiséis") porque el sintetizador no sabe que esos números son una fecha. Se corrigió para que arme la fecha con el nombre del mes en español (`"12 de septiembre de 2026"`), usando una lista fija de nombres de mes (`_MESES`) en vez de depender del locale del sistema operativo, que no es confiable entre máquinas Windows. Se actualizó también `test_decir_hora_incluye_fecha_de_hoy` en `tests/test_basic_tools.py` para que compare contra el nuevo formato.
 
 Pruebas (`tests/test_sintetizador.py`): mismo patrón que `test_transcriptor.py` -- se reemplaza `PiperVoice.load` por una voz falsa, nunca se toca el modelo real ni el hardware de audio.
+
+Fase 6.5: conexión a una IA en la nube (Gemini) para preguntas abiertas. Nació de una pregunta de Javier -- un asistente que solo contesta lo predefinido sirve de poco -- y se resolvió sin tocar la arquitectura, porque el patrón de "lista blanca + ejecutor" ya estaba hecho para esto: la IA entra como una herramienta más, no como una excepción.
+
+- `jarvis/core/gemini_client.py`: gemelo de `llm_client.py`, pero contra la API de Gemini. `generar(pregunta, instruccion_sistema)` hace el POST y deja propagar los errores de `requests`, igual que el de Ollama. La clave viaja en el header `x-goog-api-key` y no pegada a la URL, porque las URLs terminan escritas en los logs de cualquier servidor intermedio. `_extraer_texto()` valida la respuesta anidada en vez de confiar en que las llaves existan: Gemini puede contestar 200 y aun así no traer texto (por ejemplo cuando sus filtros de seguridad bloquean algo), y un `KeyError` ahí habría tumbado el loop de `main.py`.
+- `jarvis/tools/ia_tools.py`: la herramienta `preguntar_ia`, en su propio módulo y no en `basic_tools.py`, porque depende de un servicio externo -- misma lógica por la que la voz tuvo su propio paquete en la Fase 5. Nunca lanza excepciones: `executor.execute()` llama a las herramientas sin `try/except`, así que cualquier excepción que se escapara tumbaría el programa en vez de dar un mensaje.
+- `config.py`: `GEMINI_API_KEY` (vacía por defecto, cada quien pone la suya en `.env`) y `GEMINI_MODEL`.
+- `main.py`: la rama de "No entendí esa instrucción" se sustituyó por un `ToolCall` a `preguntar_ia`, que cae al mismo camino de siempre (`executor.execute` → `hablar` → `historial`). Ese respaldo cubre los casos en que el modelo local responde `null`, inventa una herramienta o devuelve JSON inválido.
+- `jarvis/core/interpreter.py`: tres ejemplos nuevos en `PROMPT_BASE`. Uno ancla `preguntar_ia` para conocimiento general, pero el importante es el de `responder_pregunta` con un cálculo: al meter dos herramientas casi gemelas (las dos "responden preguntas", las dos reciben un parámetro `pregunta`), había que anclar los dos lados y no solo el nuevo, o el modelo de 3B empezaría a mandar todo a la nube.
+
+Tres cosas que solo aparecieron al probar con una clave real, y que valen como lección:
+
+1. El alias `gemini-flash-latest` existe pero responde 503 seguido, por ser el que todos usan por defecto. `gemini-2.5-flash` ya devuelve 404 para cuentas nuevas (Google lo retiró). El default quedó en `gemini-3.6-flash`, que es justo el que recomienda el mensaje de error de Google.
+2. El mensaje de error para un 503 decía "puede ser la clave de API o el nombre del modelo" -- falso y peor que inútil, porque manda a revisar lo que está bien. Ahora cada código HTTP tiene su propio mensaje (403 la clave, 404 el modelo, 429 la cuota, 503 saturación de Google), y hay una prueba que verifica que el de 503 no mencione la clave.
+3. Gemini responde en Markdown y se extiende: negritas, listas, encabezados. Leído en voz alta por Piper, eso son asteriscos dictados y respuestas eternas. Se resolvió por los dos lados: una instrucción de sistema que pide texto plano y dos o tres frases, más `_quitar_markdown()` como red por si el modelo la ignora. Es el mismo problema que la fecha con diagonales de la Fase 6 -- conviene revisar con esa óptica cualquier texto nuevo que vaya a salir por voz.
+
+Pruebas (`tests/test_gemini_client.py`, `tests/test_ia_tools.py`): ninguna sale a internet ni gasta cuota. El cliente se prueba simulando `requests.post`; la herramienta se prueba simulando `gemini_client.generar`, que es la capa inmediatamente inferior -- el mismo patrón por capas que ya usaban `test_llm_client.py` y `test_interpreter.py`.
 
 Siguiente paso: Fase 7, palabra de activación con openWakeWord.
