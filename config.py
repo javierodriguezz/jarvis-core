@@ -60,3 +60,13 @@ AUDIO_SAMPLE_RATE = 16000
 # VOICES_DIR -- no se suben a git, igual que la base de datos o los logs.
 PIPER_VOICE = os.getenv("PIPER_VOICE", "es_ES-davefx-medium")
 VOICES_DIR = DATA_DIR / "voices"
+
+# Fase 6.5: conexión a una IA en la nube (Gemini) para preguntas abiertas que
+# ninguna herramienta local sabe responder. La clave se saca gratis en
+# https://aistudio.google.com/apikey (es distinta de la suscripción de la app
+# de Gemini). Por defecto está vacía a propósito: sin clave, la herramienta
+# avisa en vez de fallar. GEMINI_MODEL se deja configurable porque los nombres
+# de modelo de Google cambian seguido -- si un día responde 404, se corrige en
+# .env sin tocar el código (la lección del tag equivocado de Ollama, Fase 3).
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
