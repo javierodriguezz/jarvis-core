@@ -53,7 +53,16 @@ Respuesta: {{"tool_name": "abrir_programa_o_web", "params": {{"nombre": "calcula
 Instrucción: "anota que hoy es viernes"
 Respuesta: {{"tool_name": "crear_nota", "params": {{"texto": "hoy es viernes"}}}}
 
+Instrucción: "cuánto es 5 más 3"
+Respuesta: {{"tool_name": "responder_pregunta", "params": {{"pregunta": "cuánto es 5 más 3"}}}}
+
+Instrucción: "cuál es la capital de Australia"
+Respuesta: {{"tool_name": "preguntar_ia", "params": {{"pregunta": "cuál es la capital de Australia"}}}}
+
 Instrucción: "cuéntame un chiste"
+Respuesta: {{"tool_name": "preguntar_ia", "params": {{"pregunta": "cuéntame un chiste"}}}}
+
+Instrucción: "eh mmm aah"
 Respuesta: {{"tool_name": null, "params": {{}}}}
 
 Instrucción del usuario: "{instruccion}"

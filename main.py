@@ -13,6 +13,10 @@ interpreter.interpret() de siempre, como si se hubiera escrito a mano.
 
 Desde la Fase 6, cada respuesta de Jarvis también se reproduce en voz alta
 con Piper, además de imprimirse.
+
+Desde la Fase 6.5, cuando ninguna herramienta local aplica, la pregunta se
+manda a una IA en la nube (Gemini) con la herramienta preguntar_ia, en vez de
+contestar "no entendí".
 """
 
 import requests
@@ -69,10 +73,14 @@ def main():
             continue
 
         if tool_call is None:
-            respuesta = "No entendí esa instrucción."
-            hablar(respuesta)
-            historial_store.agregar_turno(texto, respuesta)
-            continue
+            # Ninguna herramienta local encajó, o el modelo contestó algo que
+            # no se pudo validar. En vez de rendirse con un "no entendí", la
+            # pregunta se manda tal cual a la IA en la nube. Sigue pasando por
+            # executor.execute() como cualquier otra herramienta: se valida
+            # contra el registro y queda en el log, igual que siempre.
+            tool_call = interpreter.ToolCall(
+                tool_name="preguntar_ia", params={"pregunta": texto}
+            )
 
         respuesta = executor.execute(tool_call)
         hablar(respuesta)
