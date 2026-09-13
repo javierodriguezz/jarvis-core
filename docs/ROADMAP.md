@@ -143,4 +143,14 @@ De paso se encontró y corrigió un bug de la Fase 3, no relacionado con la voz 
 
 Pruebas (`tests/test_grabador.py`, `tests/test_transcriptor.py`): igual que con Ollama, nunca se toca hardware ni modelo real -- se reemplazan `sounddevice.rec`/`wait` y `WhisperModel` por versiones falsas.
 
-Siguiente paso: Fase 6, salida de voz con Piper.
+Fase 6: salida de voz con `piper-tts` (paquete de Python que envuelve Piper -- a diferencia de Whisper, esta vez el pip install trajo una rueda precompilada para Windows sin necesidad de compilar nada, ni siquiera en Python 3.14). Se agregó `jarvis/audio/sintetizador.py`, simétrico a `transcriptor.py`: `sintetizar(texto)` regresa `(audio, sample_rate)`, con la voz de Piper cacheada a nivel de módulo (`_voz`) para no releerla del disco en cada llamada. El `sample_rate` se regresa junto con el audio en vez de asumirlo fijo, porque es propio de cada voz (22050 Hz para la elegida) y distinto de `config.AUDIO_SAMPLE_RATE` (16000 Hz, el de *entrada* por micrófono) -- son dos frecuencias independientes.
+
+La voz se eligió probando varias en voz alta con la misma frase de prueba: se descartó `es_MX-ald-medium` (sonaba artificial) a favor de `es_ES-davefx-medium`, con un tono más formal ("de mayordomo"). El nombre de la voz es configurable vía `config.PIPER_VOICE` (`.env`, por defecto `es_ES-davefx-medium`, mismo patrón que `WHISPER_MODEL`); sus archivos (`.onnx` y `.onnx.json`, ~63 MB) se descargan una sola vez a `data/voices/` con `python -m piper.download_voices` y no se suben a git (`data/voices/` en `.gitignore`, igual que `data/*.db`).
+
+`main.py` agrega `hablar(texto)`: imprime la respuesta y además la reproduce con `sounddevice.play()` -- ya era dependencia del proyecto desde la Fase 5, así que no se agregó nada nuevo para la reproducción. Cada `print(respuesta)` que ya existía en el loop principal (incluyendo "no entendí" y los errores de conexión con Ollama) se reemplazó por `hablar(respuesta)`, sin duplicar la lógica de historial que ya seguía después.
+
+De paso se encontró un problema, no arquitectónico sino de contenido: `decir_hora()` (Fase 1) devolvía la fecha como `"12/09/2026"`, que Piper leía literalmente ("doce barra cero nueve barra dos mil veintiséis") porque el sintetizador no sabe que esos números son una fecha. Se corrigió para que arme la fecha con el nombre del mes en español (`"12 de septiembre de 2026"`), usando una lista fija de nombres de mes (`_MESES`) en vez de depender del locale del sistema operativo, que no es confiable entre máquinas Windows. Se actualizó también `test_decir_hora_incluye_fecha_de_hoy` en `tests/test_basic_tools.py` para que compare contra el nuevo formato.
+
+Pruebas (`tests/test_sintetizador.py`): mismo patrón que `test_transcriptor.py` -- se reemplaza `PiperVoice.load` por una voz falsa, nunca se toca el modelo real ni el hardware de audio.
+
+Siguiente paso: Fase 7, palabra de activación con openWakeWord.

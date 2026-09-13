@@ -6,7 +6,7 @@ Ver el plan completo, la arquitectura y el roadmap por fases en [`docs/ROADMAP.m
 
 ## Estado actual
 
-Fase 1 a Fase 5 completas: asistente de consola cuyo intérprete usa un modelo de lenguaje local (Ollama + `llama3.2`) para decidir qué herramienta llamar, las 5 herramientas iniciales, confirmación antes de acciones destructivas, memoria persistente en SQLite (`data/jarvis.db`), y entrada de voz (comando `voz`: graba del micrófono y transcribe con `faster-whisper` antes de mandarlo al mismo intérprete).
+Fase 1 a Fase 6 completas: asistente de consola cuyo intérprete usa un modelo de lenguaje local (Ollama + `llama3.2`) para decidir qué herramienta llamar, las 5 herramientas iniciales, confirmación antes de acciones destructivas, memoria persistente en SQLite (`data/jarvis.db`), entrada de voz (comando `voz`: graba del micrófono y transcribe con `faster-whisper`) y salida de voz (cada respuesta de Jarvis se reproduce en voz alta con Piper, 100% local).
 
 Herramientas `SAFE` (se ejecutan sin preguntar):
 
@@ -23,7 +23,7 @@ Herramientas `CONFIRM` (piden confirmación s/n antes de ejecutarse):
 
 Cada turno de la conversación (incluyendo "no entendí" o errores de conexión con Ollama) queda guardado en la tabla `historial` de SQLite. La tabla de preferencias del usuario, contemplada en la Fase 4 original, se dejó pendiente hasta que exista una herramienta real que la necesite.
 
-Siguiente paso: Fase 6 (salida de voz, con Piper). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Siguiente paso: Fase 7 (palabra de activación, con openWakeWord). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Cómo correrlo
 
@@ -40,6 +40,8 @@ python main.py
 `chcp 65001` cambia el codepage de la consola de Windows a UTF-8; sin eso, los acentos pueden mostrarse como caracteres rotos.
 
 Escribe `voz` en vez de una instrucción para grabar unos segundos del micrófono y transcribirlos con Whisper (modelo local, sin mandar audio a ningún servicio externo); el texto transcrito entra al mismo intérprete que si lo hubieras escrito a mano. La primera vez que se usa, `faster-whisper` descarga el modelo configurado en `WHISPER_MODEL` (`.env`, por defecto `base`) y lo deja cacheado en disco.
+
+Cada respuesta de Jarvis también se escucha en voz alta, sintetizada con Piper (también 100% local). La voz se elige con `PIPER_VOICE` (`.env`, por defecto `es_ES-davefx-medium`); sus archivos (`.onnx` y `.onnx.json`) se descargan una sola vez a `data/voices/` con `python -m piper.download_voices --download-dir data/voices <nombre-de-voz>` y no se suben a git.
 
 ## Cómo correr las pruebas
 
