@@ -9,3 +9,6 @@ requests
 # Fase 5: entrada de voz -- captura de microfono y transcripcion a texto.
 sounddevice
 faster-whisper
+
+# Fase 6: salida de voz -- sintesis de texto a audio, 100% local.
+piper-tts

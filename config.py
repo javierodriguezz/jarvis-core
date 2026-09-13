@@ -53,3 +53,10 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 # micrófono; 16000 Hz es lo que espera Whisper, no hace falta más.
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
 AUDIO_SAMPLE_RATE = 16000
+
+# Fase 6: salida de voz. PIPER_VOICE es el nombre de la voz de Piper a usar
+# (ver https://github.com/rhasspy/piper para el catálogo completo). Los
+# archivos de la voz (.onnx y .onnx.json) se descargan una sola vez a
+# VOICES_DIR -- no se suben a git, igual que la base de datos o los logs.
+PIPER_VOICE = os.getenv("PIPER_VOICE", "es_ES-davefx-medium")
+VOICES_DIR = DATA_DIR / "voices"

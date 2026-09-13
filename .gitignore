@@ -9,6 +9,7 @@ __pycache__/
 data/*.db
 data/*.json
 data/*.log
+data/voices/
 !data/.gitkeep
 
 # Editor

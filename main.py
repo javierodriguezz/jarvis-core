@@ -10,13 +10,25 @@ que necesita que el servicio de Ollama esté corriendo en la máquina.
 Desde la Fase 5, escribir "voz" en vez de una instrucción graba del
 micrófono y transcribe con Whisper -- el texto resultante entra al mismo
 interpreter.interpret() de siempre, como si se hubiera escrito a mano.
+
+Desde la Fase 6, cada respuesta de Jarvis también se reproduce en voz alta
+con Piper, además de imprimirse.
 """
 
 import requests
+import sounddevice as sd
 
-from jarvis.audio import grabador, transcriptor
+from jarvis.audio import grabador, sintetizador, transcriptor
 from jarvis.core import executor, interpreter
 from jarvis.memory import historial_store
+
+
+def hablar(texto: str) -> None:
+    """Imprime una respuesta de Jarvis y la reproduce en voz alta con Piper."""
+    print(texto)
+    audio, sample_rate = sintetizador.sintetizar(texto)
+    sd.play(audio, sample_rate)
+    sd.wait()
 
 
 def main():
@@ -42,28 +54,28 @@ def main():
             tool_call = interpreter.interpret(texto)
         except requests.ConnectionError:
             respuesta = "No pude conectar con Ollama. ¿Está corriendo el servicio?"
-            print(respuesta)
+            hablar(respuesta)
             historial_store.agregar_turno(texto, respuesta)
             continue
         except requests.HTTPError as error:
             respuesta = f"Ollama respondió con un error: {error}"
-            print(respuesta)
+            hablar(respuesta)
             historial_store.agregar_turno(texto, respuesta)
             continue
         except requests.RequestException as error:
             respuesta = f"Error hablando con Ollama: {error}"
-            print(respuesta)
+            hablar(respuesta)
             historial_store.agregar_turno(texto, respuesta)
             continue
 
         if tool_call is None:
             respuesta = "No entendí esa instrucción."
-            print(respuesta)
+            hablar(respuesta)
             historial_store.agregar_turno(texto, respuesta)
             continue
 
         respuesta = executor.execute(tool_call)
-        print(respuesta)
+        hablar(respuesta)
         historial_store.agregar_turno(texto, respuesta)
 
 
