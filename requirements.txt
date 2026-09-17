@@ -12,3 +12,8 @@ faster-whisper
 
 # Fase 6: salida de voz -- sintesis de texto a audio, 100% local.
 piper-tts
+
+# Fase 7: palabra de activacion -- detector ligero que escucha continuo.
+# Los modelos pre-entrenados se bajan una sola vez con:
+#   python -c "import openwakeword.utils as u; u.download_models(model_names=['hey_jarvis'])"
+openwakeword

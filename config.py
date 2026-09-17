@@ -70,3 +70,13 @@ VOICES_DIR = DATA_DIR / "voices"
 # .env sin tocar el código (la lección del tag equivocado de Ollama, Fase 3).
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+
+# Fase 7: palabra de activación. WAKEWORD_MODEL es el nombre del modelo
+# pre-entrenado de openWakeWord ("hey_jarvis" detecta la frase "hey Jarvis");
+# los archivos se descargan una sola vez con openwakeword.utils.download_models()
+# y quedan dentro del paquete, igual que el modelo de Whisper queda en su cache.
+# WAKEWORD_THRESHOLD es qué tan seguro debe estar el modelo (0.0 a 1.0) para
+# dar por oída la frase: más alto = menos falsas activaciones pero hay que
+# hablar más claro; más bajo = se activa solo con cualquier ruido parecido.
+WAKEWORD_MODEL = os.getenv("WAKEWORD_MODEL", "hey_jarvis")
+WAKEWORD_THRESHOLD = float(os.getenv("WAKEWORD_THRESHOLD", "0.5"))
