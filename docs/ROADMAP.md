@@ -194,7 +194,7 @@ Lo que falta (por dónde retomar): el modelo no alcanza el umbral con la voz de 
 - Diciendo "hey Jarvis": máximo 0.2603, con intentos que se quedaron en 0.13.
 - Umbral configurado: 0.5. Nunca lo cruza, por eso el modo escucha no reacciona.
 
-Bajar el umbral a secas no es solución: habría que ponerlo cerca de 0.2, demasiado pegado al ruido de fondo, y aun así no atraparía todos los intentos. La hipótesis principal es la pronunciación -- el modelo fue entrenado con voces en inglés, donde la "J" suena /dʒ/ ("Yarvis"), muy distinta de la /x/ del español ("Járvis"). Quedó preparado `scratchpad/grabar_muestra.py` para grabar dos WAV (uno pronunciando a la inglesa y otro a la española) y compararlos sin tener que repetir pruebas en vivo.
+Bajar el umbral a secas no es solución: habría que ponerlo cerca de 0.2, demasiado pegado al ruido de fondo, y aun así no atraparía todos los intentos. La hipótesis principal es la pronunciación -- el modelo fue entrenado con voces en inglés, donde la "J" suena /dʒ/ ("Yarvis"), muy distinta de la /x/ del español ("Járvis"). El plan para medirlo es grabar dos WAV (uno pronunciando a la inglesa, otro a la española) y comparar sus puntajes fuera de línea, en vez de repetir pruebas en vivo a ciegas. El script que hace esa grabación (16000 Hz, int16, el formato que consume el detector) quedó en una carpeta temporal fuera del repo, así que probablemente haya que rehacerlo: son unas 20 líneas con `sd.rec()` y el módulo `wave`.
 
 Dos callejones sin salida ya descartados, para no repetirlos:
 
