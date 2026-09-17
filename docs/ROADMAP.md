@@ -123,7 +123,7 @@ Inicio automático con el sistema (Task Scheduler de Windows), manejo robusto de
 
 ## 5. Próximo paso inmediato
 
-Fase 0 a Fase 5 completas.
+Fase 0 a Fase 6.5 completas. Fase 7 en curso.
 
 Fase 1: las 5 herramientas iniciales (hora y fecha, abrir programa o web, crear/consultar notas, buscar archivos, responder preguntas sencillas) están implementadas, registradas en `jarvis/tools/registry.py`, y cada una tiene al menos una prueba en `tests/`.
 
@@ -172,4 +172,33 @@ Tres cosas que solo aparecieron al probar con una clave real, y que valen como l
 
 Pruebas (`tests/test_gemini_client.py`, `tests/test_ia_tools.py`): ninguna sale a internet ni gasta cuota. El cliente se prueba simulando `requests.post`; la herramienta se prueba simulando `gemini_client.generar`, que es la capa inmediatamente inferior -- el mismo patrón por capas que ya usaban `test_llm_client.py` y `test_interpreter.py`.
 
-Siguiente paso: Fase 7, palabra de activación con openWakeWord.
+Fase 7 (en curso, NO terminada): palabra de activación con openWakeWord. El código está escrito y probado, pero la detección todavía no funciona con la voz de Javier -- ver "Lo que falta" al final de esta sección.
+
+La idea: un detector de palabra de activación es un modelo diminuto que solo contesta "¿está la frase X en este pedacito de audio?", muchas veces por segundo. Es el `if` barato que va antes de la función cara: Whisper (~140 MB, segundos por transcripción) no puede correr en bucle continuo, este modelo sí -- medido en esta máquina, procesa 4 segundos de audio en 0.078 s y carga en 0.12 s.
+
+- `openwakeword` se instaló con pip sin problemas en Python 3.14. No trajo motor de inferencia como dependencia, pero `onnxruntime` ya estaba instalado desde la Fase 6 (lo arrastró `piper-tts`), así que no hubo nada que resolver ahí.
+- El modelo no hubo que entrenarlo: openWakeWord trae modelos pre-entrenados y uno de ellos es `hey_jarvis`. Se descargan una sola vez con `openwakeword.utils.download_models(model_names=['hey_jarvis'])` y quedan dentro del paquete, igual que el modelo de Whisper queda en su cache -- no en `data/`.
+- Detecta la frase completa "hey Jarvis", no "Jarvis" a secas. Una sola palabra corta da demasiados falsos positivos; por eso todos los asistentes comerciales usan frases de dos o tres sílabas ("Hey Siri", "OK Google").
+- `jarvis/audio/detector.py`: `esperar_palabra_activacion()` bloquea hasta oír la frase. Abre el micrófono con `sd.InputStream` y lo lee en bloques de exactamente 1280 muestras (80 ms a 16000 Hz), que es el tamaño que exige el modelo; internamente él guarda el último ~1.5 s, por eso reconoce una frase completa aunque se le entregue en migajas. El modelo se cachea a nivel de módulo, mismo patrón que `transcriptor.py` y `sintetizador.py`.
+- Trampa importante del formato: openWakeWord consume `int16` (enteros de 16 bits), mientras que `grabador.py` entrega `float32` entre -1.0 y 1.0 porque es lo que quiere Whisper. Es la misma señal en dos representaciones distintas. Si se le pasa la equivocada no truena: simplemente nunca detecta nada. Por eso el detector abre su propio stream en `int16` en vez de convertir, y hay una prueba (`test_abre_el_microfono_en_int16_y_no_en_float32`) que lo fija.
+- `config.py`: `WAKEWORD_MODEL` (por defecto `hey_jarvis`) y `WAKEWORD_THRESHOLD` (por defecto 0.5), sobreescribibles en `.env` igual que `WHISPER_MODEL` y `PIPER_VOICE`.
+- `grabador.py`: se le agregó el parámetro `cuenta_regresiva` (por defecto `True`, comportamiento de siempre). En el modo manos libres se apaga: la cuenta de 3 segundos existía porque el usuario escribía `voz` y necesitaba prepararse, pero después de decir "hey Jarvis" ya viene hablando y esos 3 segundos se comerían su pregunta.
+- `main.py`: antes de agregar nada se extrajo la tubería (interpretar → ejecutar → responder → historial) del cuerpo del bucle a `procesar_texto(texto)`, para que el modo nuevo la reutilizara en vez de duplicarla. `modo_escucha()` es el bucle manos libres: espera la palabra, contesta "¿Sí?" en voz alta (hace de campanita, avisa que ya está grabando), graba sin cuenta regresiva, transcribe y llama a `procesar_texto()`. Se sale con Ctrl+C, que regresa al prompt de texto -- el modo escrito se conservó a propósito porque sigue siendo la forma cómoda de depurar.
+- `main.py` imprime ahora "Transcribiendo...", "Pensando..." y "Respondiendo...". Sin eso la consola se queda muda unos 6 segundos (2.4 s de Ollama + 1.7 s de síntesis + 1.7 s de reproducción, medidos) y el programa parece colgado. De hecho se reportó como un bug ("se quedó, no me dio respuesta") y no lo era.
+- Pruebas: `tests/test_detector.py` (7, con micrófono y modelo falsos) y `tests/test_main.py` (5, sobre el bucle de `modo_escucha` con todo simulado), más 2 nuevas en `test_grabador.py` para la cuenta regresiva. Suite completa: 126.
+
+Lo que falta (por dónde retomar): el modelo no alcanza el umbral con la voz de Javier. Medido con un diagnóstico numérico sobre el micrófono real:
+
+- Volumen máximo de entrada: 12441 de 32767 -- el micrófono está bien, no es problema de ganancia.
+- Ruido de fondo y habla normal: puntajes de 0.02 a 0.09.
+- Diciendo "hey Jarvis": máximo 0.2603, con intentos que se quedaron en 0.13.
+- Umbral configurado: 0.5. Nunca lo cruza, por eso el modo escucha no reacciona.
+
+Bajar el umbral a secas no es solución: habría que ponerlo cerca de 0.2, demasiado pegado al ruido de fondo, y aun así no atraparía todos los intentos. La hipótesis principal es la pronunciación -- el modelo fue entrenado con voces en inglés, donde la "J" suena /dʒ/ ("Yarvis"), muy distinta de la /x/ del español ("Járvis"). Quedó preparado `scratchpad/grabar_muestra.py` para grabar dos WAV (uno pronunciando a la inglesa y otro a la española) y compararlos sin tener que repetir pruebas en vivo.
+
+Dos callejones sin salida ya descartados, para no repetirlos:
+
+1. `Model.reset()` no es el culpable. Se sospechó porque era la única línea que el script de prueba manual no tenía, pero su código fuente deja los buffers exactamente igual que un modelo recién construido.
+2. No sirve probar el detector con audio generado por Piper. Se intentó sintetizar "hey Jarvis" para tener una prueba reproducible sin micrófono, y el modelo dio 0.0002: estos modelos no reaccionan a voces sintéticas. Cualquier prueba de detección real necesita voz humana grabada.
+
+Siguiente paso concreto: grabar los dos WAV de muestra, medir cuál pronunciación puntúa más alto, y con eso decidir entre calibrar el umbral, cambiar de frase de activación, o entrenar un modelo propio con la voz de Javier (openWakeWord lo permite).

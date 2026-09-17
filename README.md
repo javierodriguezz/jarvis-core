@@ -24,7 +24,7 @@ Herramientas `CONFIRM` (piden confirmación s/n antes de ejecutarse):
 
 Cada turno de la conversación (incluyendo los errores de conexión con Ollama) queda guardado en la tabla `historial` de SQLite. La tabla de preferencias del usuario, contemplada en la Fase 4 original, se dejó pendiente hasta que exista una herramienta real que la necesite.
 
-Siguiente paso: Fase 7 (palabra de activación, con openWakeWord). Ver el detalle en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Fase 7 (palabra de activación) está a medias: el comando `escuchar` y el detector ya existen, pero el modelo `hey_jarvis` de openWakeWord todavía no alcanza el umbral de confianza con la voz del autor (llega a 0.26 de un umbral de 0.5), así que en la práctica no se activa. Falta calibrarlo. El detalle de lo medido y por dónde seguir está en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Cómo correrlo
 
@@ -43,6 +43,8 @@ python main.py
 Escribe `voz` en vez de una instrucción para grabar unos segundos del micrófono y transcribirlos con Whisper (modelo local, sin mandar audio a ningún servicio externo); el texto transcrito entra al mismo intérprete que si lo hubieras escrito a mano. La primera vez que se usa, `faster-whisper` descarga el modelo configurado en `WHISPER_MODEL` (`.env`, por defecto `base`) y lo deja cacheado en disco.
 
 Cada respuesta de Jarvis también se escucha en voz alta, sintetizada con Piper (también 100% local). La voz se elige con `PIPER_VOICE` (`.env`, por defecto `es_ES-davefx-medium`); sus archivos (`.onnx` y `.onnx.json`) se descargan una sola vez a `data/voices/` con `python -m piper.download_voices --download-dir data/voices <nombre-de-voz>` y no se suben a git.
+
+Escribe `escuchar` para entrar al modo manos libres: Jarvis espera a oír "hey Jarvis" y solo entonces graba, responde y vuelve a quedarse esperando, sin que toques el teclado. Ctrl+C regresa al prompt de texto. El detector es un modelo pequeño que corre continuo sin cargar el CPU; Whisper solo se despierta después de la activación. Los modelos se descargan una sola vez con `python -c "import openwakeword.utils as u; u.download_models(model_names=['hey_jarvis'])"`. La sensibilidad se ajusta con `WAKEWORD_THRESHOLD` (`.env`, por defecto 0.5): más bajo se activa más fácil pero con más falsas alarmas.
 
 Si una instrucción no corresponde a ninguna herramienta local, Jarvis se la pasa a Gemini en vez de contestar que no entendió. Para eso hace falta una clave de API gratuita de [Google AI Studio](https://aistudio.google.com/apikey), puesta en `GEMINI_API_KEY` dentro de `.env` (ese archivo nunca se sube a git). El modelo se elige con `GEMINI_MODEL`; por defecto `gemini-3.6-flash`, porque los alias tipo `-latest` suelen responder 503 por saturación. Sin clave configurada, todo lo demás sigue funcionando igual y solo esa herramienta avisa que le falta la clave.
 
