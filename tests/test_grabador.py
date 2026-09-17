@@ -49,3 +49,33 @@ def test_grabar_audio_usa_duracion_por_defecto(monkeypatch):
     grabador.grabar_audio()
 
     assert llamadas["n_muestras"] == 4 * config.AUDIO_SAMPLE_RATE
+
+
+def test_grabar_audio_hace_la_cuenta_regresiva_por_defecto(monkeypatch):
+    dormidas = []
+
+    monkeypatch.setattr(
+        grabador.sd, "rec", lambda n, samplerate, channels, dtype: np.zeros((n, channels))
+    )
+    monkeypatch.setattr(grabador.sd, "wait", lambda: None)
+    monkeypatch.setattr(grabador.time, "sleep", lambda segundos: dormidas.append(segundos))
+
+    grabador.grabar_audio(duracion_segundos=1)
+
+    assert dormidas == [1, 1, 1]
+
+
+def test_grabar_audio_sin_cuenta_regresiva_no_espera(monkeypatch):
+    # En el modo de palabra de activación el usuario ya está hablando: esperar
+    # tres segundos se comería el inicio de lo que dice.
+    dormidas = []
+
+    monkeypatch.setattr(
+        grabador.sd, "rec", lambda n, samplerate, channels, dtype: np.zeros((n, channels))
+    )
+    monkeypatch.setattr(grabador.sd, "wait", lambda: None)
+    monkeypatch.setattr(grabador.time, "sleep", lambda segundos: dormidas.append(segundos))
+
+    grabador.grabar_audio(duracion_segundos=1, cuenta_regresiva=False)
+
+    assert dormidas == []
